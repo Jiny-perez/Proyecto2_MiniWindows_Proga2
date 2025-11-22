@@ -9,7 +9,7 @@ import java.io.*;
 public class GestionMusica {
 
     private RandomAccessFile file;
-    private String direccion = "archivo/cancion.mp3";
+    private final String direccion = "archivo/cancion.mp3";
 
     public GestionMusica() {
         try {
@@ -19,7 +19,7 @@ public class GestionMusica {
             }
             file = new RandomAccessFile(direccion, "rw");
         } catch (IOException e) {
-            System.out.println("Error : " + e.getMessage());
+            System.out.println("Error: " + e.getMessage());
         }
     }
 
@@ -30,20 +30,24 @@ public class GestionMusica {
     public void AddSong(Cancion cancion) throws IOException {
         file.seek(file.length());
         file.writeUTF(cancion.getTitulo());
-        file.writeUTF(cancion.getArtista());
         file.writeUTF(cancion.getDireccion());
     }
-    
-    public void cargarListaCanciones(ListaCanciones lista) throws IOException {
-        file.seek(0);
 
-        while (file.getFilePointer() < file.length()) {
-            String titulo = file.readUTF();
-            String artista = file.readUTF();
-            String direccion = file.readUTF();
+    public Cancion crearCancionDesdeArchivo(String rutaArchivo) {
+        File archivo = new File(rutaArchivo);
+        String nombreArchivo = archivo.getName();
+        String titulo = nombreArchivo.replaceFirst("[.][^.]+$", "");
+        return new Cancion(titulo, rutaArchivo);
+    }
 
-            Cancion cancion = new Cancion(titulo, artista, direccion);
-            lista.addListaCanciones(cancion);
+    public void GuardarListaCanciones(ListaCanciones lista) throws IOException {
+        file.setLength(0);
+        int totalCanciones = lista.tamanio();
+        for (int i = 0; i < totalCanciones; i++) {
+            Cancion cancion = lista.obtenerCancion(i);
+            if (cancion != null) {
+                AddSong(cancion);
+            }
         }
     }
 }

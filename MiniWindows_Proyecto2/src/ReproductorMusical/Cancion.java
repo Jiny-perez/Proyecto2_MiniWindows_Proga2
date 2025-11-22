@@ -10,13 +10,11 @@ import org.jaudiotagger.audio.*;
 public class Cancion {
 
     private String titulo;
-    private String artista;
     private String direccion;
     private long duracion;
 
-    public Cancion(String titulo, String artista, String direccion) {
+    public Cancion(String titulo, String direccion) {
         this.titulo = titulo;
-        this.artista = artista;
         this.direccion = direccion;
         this.duracion = calcularDuracionMP3();
     }
@@ -27,14 +25,6 @@ public class Cancion {
 
     public String getTitulo() {
         return titulo;
-    }
-
-    public void setArtista(String artista) {
-        this.artista = artista;
-    }
-
-    public String getArtista() {
-        return artista;
     }
 
     public void setDireccion(String direccion) {
@@ -49,49 +39,23 @@ public class Cancion {
         return duracion;
     }
 
-    public boolean isMP3(byte[] cabecera) {
-        if (cabecera.length >= 3 && cabecera[0] == 'I' && cabecera[1] == 'D' && cabecera[2] == '3') {
-            return true;
-        }
-
-        if (cabecera.length >= 2 && (cabecera[0] & 0xFF) == 0xFF && (cabecera[1] & 0xE0) == 0xE0) {
-            return true;
-        }
-        return false;
-    }
-
-    public long calcularDuracionMP3() {
+    private long calcularDuracionMP3() {
         try {
-            File MP3 = new File(this.direccion);
-            this.duracion = 0;
+            File archivoMP3 = new File(this.direccion);
+            if (!archivoMP3.exists()) {
+                return 0;
+            }
 
-            AudioFile audioFile = AudioFileIO.read(MP3);
+            AudioFile audioFile = AudioFileIO.read(archivoMP3);
             AudioHeader audioHeader = audioFile.getAudioHeader();
 
             if (audioHeader != null) {
                 return audioHeader.getTrackLength();
             }
         } catch (Exception e) {
-            System.err.println("Error: No se logro leer la duración de: " + this.direccion);
-            return 0;
+            System.err.println("Error al leer duración de: " + this.direccion);
         }
         return 0;
-    }
-
-    public long CalcularDuracionPorTamaño(long tamanioBytes) {
-        double MegaBytes = tamanioBytes / (1024.0 * 1024.0);
-        long duracionSegundos = (long) (tamanioBytes / 16000.0);
-
-        duracionSegundos = (long) (duracionSegundos * 0.92);
-
-        if (duracionSegundos < 10) {
-            duracionSegundos = 60;
-        }
-        if (duracionSegundos > 3600) {
-            duracionSegundos = 3600;
-        }
-
-        return duracionSegundos;
     }
 
     public String DuracionFormateada() {
@@ -104,15 +68,13 @@ public class Cancion {
 
         if (minutos >= 60) {
             long horas = minutos / 60;
-            minutos = minutos % 60;
+            minutos %= 60;
             return String.format("%d:%02d:%02d", horas, minutos, segundos);
         }
-
         return String.format("%d:%02d", minutos, segundos);
     }
-    
-     public String toString() {
-        return titulo + " - " + artista + " (" + DuracionFormateada() + ")";
-    }
 
+    public String toString() {
+        return titulo + " (" + DuracionFormateada() + ")";
+    }
 }
