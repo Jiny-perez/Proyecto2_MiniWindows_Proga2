@@ -29,11 +29,11 @@ public class Reproductor {
 
     private int lastFrame = 0;
     private boolean userPaused = false;
-    private double FRAMES_PER_SECOND_APPROX = 38.0;
 
     private Runnable onFinished;
-
+    private JLabel lblImgDefault;
     private JLabel lblTitulo;
+
     private JButton btnPlayPause;
     private JButton btnStop;
     private JProgressBar barraProgreso;
@@ -88,90 +88,93 @@ public class Reproductor {
         panelTexto.add(lblTitulo);
         panelInfo.add(panelTexto, BorderLayout.CENTER);
 
-        JPanel panelCentral = new JPanel();
-        panelCentral.setLayout(new BoxLayout(panelCentral, BoxLayout.Y_AXIS));
-        panelCentral.setBackground(new Color(40, 40, 40));
-        panelCentral.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
+        lblImgDefault = new JLabel();
+        lblImgDefault.setPreferredSize(new Dimension(100, 100));
+        lblImgDefault.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+        lblImgDefault.setHorizontalAlignment(SwingConstants.CENTER);
+        lblImgDefault.setVerticalAlignment(SwingConstants.CENTER);
 
-        JPanel panelControles = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
-        panelControles.setBackground(new Color(40, 40, 40));
-
-        String[] nombres = {"REINICIAR", "DETENER"};
-        JButton[] botones = new JButton[2];
-
-        for (int i = 0; i < nombres.length; i++) {
-
-            JButton b = new JButton(nombres[i]);
-            b.setBackground(new Color(220, 53, 69));
-            b.setForeground(Color.WHITE);
-            b.setFocusPainted(false);
-            b.setBorderPainted(false);
-            b.setFont(new Font("Arial", Font.BOLD, 16));
-            b.setPreferredSize(new Dimension(273, 35));
-            b.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-            b.setBorder(BorderFactory.createEmptyBorder());
-            b.setContentAreaFilled(false);
-            b.setOpaque(true);
-            b.setEnabled(false);
-
-            Color base = new Color(220, 53, 69);
-            Color hover = base.brighter();
-
-            b.addMouseListener(new java.awt.event.MouseAdapter() {
-                @Override
-                public void mouseEntered(java.awt.event.MouseEvent e) {
-                    if (b.isEnabled()) {
-                        b.setBackground(hover);
-                    }
-                }
-
-                @Override
-                public void mouseExited(java.awt.event.MouseEvent e) {
-                    b.setBackground(base);
-                }
-            });
-
-            botones[i] = b;
-            panelControles.add(b);
-        }
-
-        btnPlayPause = botones[0];
-        btnStop = botones[1];
+        JPanel panelRight = new JPanel();
+        panelRight.setLayout(new BoxLayout(panelRight, BoxLayout.Y_AXIS));
+        panelRight.setBackground(new Color(40, 40, 40));
+        panelRight.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
         JPanel panelProgreso = new JPanel(new BorderLayout());
         panelProgreso.setBackground(new Color(40, 40, 40));
-        panelProgreso.setBorder(BorderFactory.createEmptyBorder(15, 0, 0, 0));
-
+        panelProgreso.setBorder(BorderFactory.createEmptyBorder(5, 0, 10, 0));
         barraProgreso = new JProgressBar(0, 100);
+
         barraProgreso.setBackground(new Color(80, 80, 80));
         barraProgreso.setForeground(new Color(29, 185, 84));
         barraProgreso.setBorderPainted(false);
-        barraProgreso.setPreferredSize(new Dimension(400, 4));
+        barraProgreso.setPreferredSize(new Dimension(420, 12));
+        barraProgreso.setMaximumSize(new Dimension(420, 12));
 
         lblTiempo = new JLabel("0:00 / 0:00");
         lblTiempo.setForeground(new Color(179, 179, 179));
         lblTiempo.setFont(new Font("Arial", Font.PLAIN, 11));
         lblTiempo.setHorizontalAlignment(SwingConstants.CENTER);
         lblTiempo.setBorder(BorderFactory.createEmptyBorder(5, 0, 0, 0));
-
         panelProgreso.add(barraProgreso, BorderLayout.CENTER);
         panelProgreso.add(lblTiempo, BorderLayout.SOUTH);
 
-        panelCentral.add(panelControles);
-        panelCentral.add(panelProgreso);
+        JPanel panelControles = new JPanel(new GridLayout(1, 2, 10, 0));
+        panelControles.setBackground(new Color(40, 40, 40));
+        panelControles.setPreferredSize(new Dimension(420, 40));
+        panelControles.setMaximumSize(new Dimension(420, 40));
+        panelControles.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        reproductorPanel.add(panelInfo, BorderLayout.WEST);
-        reproductorPanel.add(panelCentral, BorderLayout.CENTER);
+        String[] nombres = {"REINICIAR", "DETENER"};
+        JButton[] botones = new JButton[2];
+        for (int i = 0; i < nombres.length; i++) {
+            JButton b = new JButton(nombres[i]);
+            b.setBackground(new Color(220, 53, 69));
+            b.setForeground(Color.WHITE);
+            b.setFocusPainted(false);
+            b.setBorderPainted(false);
+            b.setFont(new Font("Arial", Font.BOLD, 16));
+            b.setPreferredSize(new Dimension(205, 36));
+            b.setMinimumSize(new Dimension(205, 36));
+            b.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            b.setBorder(BorderFactory.createEmptyBorder());
+            b.setContentAreaFilled(false);
+            b.setOpaque(true);
+            b.setEnabled(false);
+            b.addMouseListener(new java.awt.event.MouseAdapter() {
+                @Override
+                public void mouseEntered(java.awt.event.MouseEvent e) {
+                    if (b.isEnabled()) {
+                        b.setBackground(new Color(220, 53, 69).brighter());
+                    }
+                }
 
-        btnPlayPause.addActionListener(e -> reiniciar());
+                @Override
+                public void mouseExited(java.awt.event.MouseEvent e) {
+                    b.setBackground(new Color(220, 53, 69));
+                }
+            });
+            botones[i] = b;
+            panelControles.add(b);
+        }
+        btnPlayPause = botones[0];
+        btnStop = botones[1];
 
+        panelRight.add(panelProgreso);
+        panelRight.add(Box.createVerticalStrut(8));
+        panelRight.add(panelControles);
+
+        reproductorPanel.add(lblImgDefault, BorderLayout.WEST);
+        reproductorPanel.add(panelInfo, BorderLayout.CENTER);
+        reproductorPanel.add(panelRight, BorderLayout.EAST);
+        
+        btnPlayPause.addActionListener(e -> reiniciarCancion());
         btnStop.addActionListener(e -> {
             if (isPlaying) {
-                togglePauseResume();      
+                detenerContinuar();
             } else if (isPaused) {
-                togglePauseResume();      
+                detenerContinuar();
             } else {
-                play();                   
+                play();
             }
         });
     }
@@ -182,7 +185,7 @@ public class Reproductor {
                 tiempoTranscurrido++;
                 actualizar();
                 if (duracionTotal > 0 && tiempoTranscurrido >= duracionTotal) {
-                    terminarPorFinNatural();
+                    cancionTerminada();
                 }
             }
         });
@@ -192,13 +195,19 @@ public class Reproductor {
         if (cancion == null) {
             return;
         }
-        detenerRecursos();
+        detenerCancion();
         this.cancionActual = cancion;
         this.duracionTotal = cancion.getDuracion();
         this.tiempoTranscurrido = 0;
         this.lastFrame = 0;
         this.userPaused = false;
         lblTitulo.setText(cancion.getTitulo());
+
+        if (lblImgDefault != null) {
+            ImageIcon ic = cancion.getImgDefault();
+            lblImgDefault.setIcon(cancion.getImgDefault());
+        }
+
         btnPlayPause.setEnabled(true);
         btnStop.setEnabled(true);
         btnPlayPause.setText("REINICIAR");
@@ -206,7 +215,7 @@ public class Reproductor {
         actualizar();
     }
 
-    public void reproducir(Cancion cancion) {
+    public void reproducirCancion(Cancion cancion) {
         if (cancion == null) {
             return;
         }
@@ -218,32 +227,23 @@ public class Reproductor {
         if (cancionActual == null) {
             return;
         }
-        // si estaba pausado, reanudamos desde lastFrame
         if (isPaused && lastFrame > 0) {
             userPaused = false;
             isPaused = false;
-            startPlayerFromFrame(lastFrame);
+            ejecutarReproduccion(lastFrame);
             return;
         }
         userPaused = false;
-        // inicio desde el principio
+
         lastFrame = 0;
         tiempoTranscurrido = 0;
-        startPlayerFromFrame(0);
+        ejecutarReproduccion(0);
     }
 
-    /**
-     * Pausa o continua. Importante: antes de cerrar player, guardamos lastFrame
-     * a partir de tiempoTranscurrido para asegurarnos de poder reanudar desde
-     * el mismo punto.
-     */
-    public void togglePauseResume() {
+    public void detenerContinuar() {
         if (isPlaying) {
-            // PAUSAR: guardamos posición actual en frames usando tiempoTranscurrido
             userPaused = true;
-            // Guardar lastFrame aproximado *antes* de cerrar el player
             lastFrame = secondsToFrames(tiempoTranscurrido);
-            // Paramos timer y cerramos player
             if (timerUI != null) {
                 timerUI.stop();
             }
@@ -260,53 +260,47 @@ public class Reproductor {
             isPlaying = false;
             btnStop.setText("CONTINUAR");
             btnPlayPause.setText("REINICIAR");
-            // streams cerrados en detenerRecursos por seguridad
             closeStreamsSilently();
         } else if (isPaused) {
-            // CONTINUAR: reanudar desde lastFrame *sin* resetear tiempoTranscurrido
             userPaused = false;
             isPaused = false;
-            startPlayerFromFrame(lastFrame);
+            ejecutarReproduccion(lastFrame);
             btnStop.setText("DETENER");
         } else {
-            // si no estaba ni reproduciendo ni pausado, iniciar
             play();
         }
     }
 
-    public void reiniciar() {
+    public void reiniciarCancion() {
         if (cancionActual == null) {
             return;
         }
-        // reset absoluto
+
         userPaused = false;
         isPaused = false;
         isPlaying = false;
         lastFrame = 0;
         tiempoTranscurrido = 0;
-        startPlayerFromFrame(0);
+        ejecutarReproduccion(0);
         btnStop.setText("DETENER");
         btnPlayPause.setText("REINICIAR");
     }
 
-    private void startPlayerFromFrame(int startFrame) {
-        detenerRecursos();
+    private void ejecutarReproduccion(int startFrame) {
+        detenerCancion();
         try {
             fis = new FileInputStream(cancionActual.getDireccion());
             bis = new BufferedInputStream(fis);
             player = new AdvancedPlayer(bis);
 
-            // sincronizar tiempoTranscurrido con el frame de inicio
             if (startFrame > 0) {
                 tiempoTranscurrido = framesToSeconds(startFrame);
                 lastFrame = startFrame;
             } else {
-                // si arrancamos desde cero, dejamos tiempo en 0
-                tiempoTranscurrido = tiempoTranscurrido; // mantiene tiempoTranscurrido si reanudamos desde 0 o reiniciar ya lo puso en 0
+                tiempoTranscurrido = tiempoTranscurrido;
             }
 
             player.setPlayBackListener(new PlaybackListener() {
-                @Override
                 public void playbackStarted(PlaybackEvent evt) {
                     isPlaying = true;
                     isPaused = false;
@@ -320,9 +314,7 @@ public class Reproductor {
                     });
                 }
 
-                @Override
                 public void playbackFinished(PlaybackEvent evt) {
-                    // intento de obtener frame desde evento; si es 0 usamos tiempoTranscurrido
                     int frameFromEvt = evt.getFrame();
                     if (frameFromEvt > 0) {
                         lastFrame = frameFromEvt;
@@ -330,14 +322,11 @@ public class Reproductor {
                         lastFrame = secondsToFrames(tiempoTranscurrido);
                     }
 
-                    // Si el cierre se produjo por userPaused, no tratamos como fin natural
                     if (userPaused) {
-                        // mantener isPaused == true (estado ya puesto por togglePauseResume)
                         return;
                     }
 
-                    // Si no fue pausa del usuario, fin natural
-                    SwingUtilities.invokeLater(() -> terminarPorFinNatural());
+                    SwingUtilities.invokeLater(() -> cancionTerminada());
                 }
             });
 
@@ -355,7 +344,7 @@ public class Reproductor {
                                 "Error al reproducir: " + e.getMessage(),
                                 "Error",
                                 JOptionPane.ERROR_MESSAGE);
-                        detenerRecursos();
+                        detenerCancion();
                         actualizar();
                     });
                 }
@@ -370,8 +359,8 @@ public class Reproductor {
         }
     }
 
-    private void terminarPorFinNatural() {
-        detenerRecursos();
+    private void cancionTerminada() {
+        detenerCancion();
         isPlaying = false;
         isPaused = false;
         tiempoTranscurrido = 0;
@@ -391,7 +380,7 @@ public class Reproductor {
         }
     }
 
-    private void detenerRecursos() {
+    private void detenerCancion() {
         if (player != null) {
             try {
                 player.close();
@@ -442,15 +431,15 @@ public class Reproductor {
     }
 
     private int secondsToFrames(long seconds) {
-        return (int) Math.round(seconds * FRAMES_PER_SECOND_APPROX);
+        return (int) Math.round(seconds * 38.0);
     }
 
     private int framesToSeconds(int frames) {
-        return (int) Math.round(frames / FRAMES_PER_SECOND_APPROX);
+        return (int) Math.round(frames / 38.0);
     }
 
     public void limpiar() {
-        detenerRecursos();
+        detenerCancion();
         cancionActual = null;
         lblTitulo.setText("Selecciona una canción");
         lblTiempo.setText("0:00 / 0:00");
@@ -458,5 +447,9 @@ public class Reproductor {
         btnPlayPause.setEnabled(false);
         btnStop.setEnabled(false);
         btnPlayPause.setText("REINICIAR");
+
+        if (lblImgDefault != null) {
+            lblImgDefault.setIcon(null);
+        }
     }
 }

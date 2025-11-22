@@ -93,44 +93,45 @@ public class GUIReproductorMusica {
         panelListaContenedor.add(lblListaVacia, "Vacia");
         PPrincipal.add(panelListaContenedor, BorderLayout.CENTER);
 
-        JPanel panelBoton = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
-        panelBoton.setBackground(new Color(18, 18, 18));
-
         btnAgregar = new JButton("Agregar Canción");
         btnAgregar.setFont(new Font("Segoe UI", Font.BOLD, 14));
         btnAgregar.setBackground(new Color(29, 185, 84));
         btnAgregar.setForeground(Color.WHITE);
         btnAgregar.setFocusPainted(false);
+        btnAgregar.setBorderPainted(false);
         btnAgregar.setContentAreaFilled(true);
         btnAgregar.setCursor(new Cursor(Cursor.HAND_CURSOR));
         btnAgregar.setPreferredSize(new Dimension(890, 40));
+
         btnAgregar.addMouseListener(new MouseAdapter() {
-            @Override
             public void mouseEntered(MouseEvent e) {
                 btnAgregar.setBackground(new Color(29, 185, 84).darker());
             }
 
-            @Override
             public void mouseExited(MouseEvent e) {
                 btnAgregar.setBackground(new Color(29, 185, 84));
             }
         });
+
         btnAgregar.addActionListener(e -> agregarCancion());
+
+        JPanel panelBoton = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
+        panelBoton.setBackground(new Color(18, 18, 18));
         panelBoton.add(btnAgregar);
 
-        JPanel southContainer = new JPanel();
-        southContainer.setLayout(new BoxLayout(southContainer, BoxLayout.Y_AXIS));
-        southContainer.setBackground(new Color(18, 18, 18));
-
-        panelBoton.setAlignmentX(Component.CENTER_ALIGNMENT);
-        southContainer.add(panelBoton);
-        southContainer.add(Box.createRigidArea(new Dimension(0, 6)));
+        JPanel panelSouth = new JPanel();
+        panelSouth.setLayout(new BoxLayout(panelSouth, BoxLayout.Y_AXIS));
+        panelSouth.setBackground(new Color(18, 18, 18));
 
         JPanel panelReproductor = reproductor.getPanel();
         panelReproductor.setAlignmentX(Component.CENTER_ALIGNMENT);
-        southContainer.add(panelReproductor);
 
-        PPrincipal.add(southContainer, BorderLayout.SOUTH);
+        panelSouth.add(panelReproductor);
+        panelSouth.add(Box.createRigidArea(new Dimension(0, 8)));
+        panelSouth.add(panelBoton);
+
+        PPrincipal.add(panelSouth, BorderLayout.SOUTH);
+
         VReproductorMusica.add(PPrincipal);
         VReproductorMusica.setVisible(true);
     }
@@ -186,6 +187,9 @@ public class GUIReproductorMusica {
                     panel.setBackground(new Color(18, 18, 18));
                 }
 
+                JLabel lblImgDefault = new JLabel(cancion.getImgDefault());
+                lblImgDefault.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+
                 JPanel panelInfo = new JPanel(new GridLayout(2, 1));
                 panelInfo.setOpaque(false);
 
@@ -200,6 +204,7 @@ public class GUIReproductorMusica {
                 lblDuracion.setHorizontalAlignment(SwingConstants.RIGHT);
                 lblDuracion.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 20));
 
+                panel.add(lblImgDefault, BorderLayout.WEST);
                 panel.add(panelInfo, BorderLayout.CENTER);
                 panel.add(lblDuracion, BorderLayout.EAST);
                 return panel;
@@ -213,7 +218,7 @@ public class GUIReproductorMusica {
         fileChooser.setDialogTitle("Seleccionar Archivo de Música (MP3)");
         fileChooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("Archivos MP3 (*.mp3)", "mp3"));
         int resultado = fileChooser.showOpenDialog(null);
-       
+
         if (resultado == JFileChooser.APPROVE_OPTION) {
             File archivoSeleccionado = fileChooser.getSelectedFile();
             String rutaArchivo = archivoSeleccionado.getAbsolutePath();

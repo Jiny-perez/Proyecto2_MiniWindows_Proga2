@@ -1,6 +1,7 @@
 package ReproductorMusical;
 
 import java.io.*;
+import javax.swing.*;
 import org.jaudiotagger.audio.*;
 
 /**
@@ -11,6 +12,7 @@ public class Cancion {
 
     private String titulo;
     private String direccion;
+    private ImageIcon imgDefault;
     private long duracion;
 
     public Cancion(String titulo, String direccion) {
@@ -37,6 +39,13 @@ public class Cancion {
 
     public long getDuracion() {
         return duracion;
+    }
+
+    public ImageIcon getImgDefault() {
+        if (imgDefault == null) {
+            imgDefault = imgDefault();
+        }
+        return imgDefault;
     }
 
     private long calcularDuracionMP3() {
@@ -72,6 +81,18 @@ public class Cancion {
             return String.format("%d:%02d:%02d", horas, minutos, segundos);
         }
         return String.format("%d:%02d", minutos, segundos);
+    }
+
+    private ImageIcon imgDefault() {
+        java.awt.image.BufferedImage img = new java.awt.image.BufferedImage(50, 50, java.awt.image.BufferedImage.TYPE_INT_RGB);
+        java.awt.Graphics2D g2d = img.createGraphics();
+        g2d.setColor(new java.awt.Color(64, 64, 64));
+        g2d.fillRect(0, 0, 50, 50);
+        g2d.setColor(java.awt.Color.WHITE);
+        g2d.setFont(new java.awt.Font("Arial", java.awt.Font.BOLD, 20));
+        g2d.drawString("♪", 18, 32);
+        g2d.dispose();
+        return new ImageIcon(img);
     }
 
     public String toString() {
