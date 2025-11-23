@@ -32,7 +32,6 @@ public class VentanaPrincipal extends JFrame {
     }
     
     private void inicializarComponentes() {
-        
         crearBarraMenu();
         
         panelEscritorio = new JPanel();
@@ -149,11 +148,10 @@ public class VentanaPrincipal extends JFrame {
     
     private void configurarVentana() {
         setTitle("Mini-Windows - " + usuarioActual.getUsername());
-        setSize(1024, 768);
+        setExtendedState(JFrame.MAXIMIZED_BOTH);
         setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         setLocationRelativeTo(null);
         
-        // Confirmar antes de cerrar
         addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
@@ -162,46 +160,43 @@ public class VentanaPrincipal extends JFrame {
         });
     }
     
-    // Métodos para abrir aplicaciones EN PROCESO
-    
+    // Aplicaciones - EN PROCESO
     private void abrirNavegador() {
-        JOptionPane.showMessageDialog(this, 
-            "Navegador de archivos\n(EN PROCESO)", 
-            "Próximamente", 
-            JOptionPane.INFORMATION_MESSAGE);
+        NavegadorArchivos navegador = new NavegadorArchivos(this, usuarioActual, sistema);
+        navegador.setVisible(true);
     }
     
     private void abrirCMD() {
         JOptionPane.showMessageDialog(this, 
-            "Consola CMD\n(EN PROCESO)", 
+            "Consola CMD\n(Por implementar)", 
             "Próximamente", 
             JOptionPane.INFORMATION_MESSAGE);
     }
     
     private void abrirEditor() {
         JOptionPane.showMessageDialog(this, 
-            "Editor de Texto\n(EN PROCESO)", 
+            "Editor de Texto\n(Por implementar)", 
             "Próximamente", 
             JOptionPane.INFORMATION_MESSAGE);
     }
     
     private void abrirVisorImagenes() {
         JOptionPane.showMessageDialog(this, 
-            "Visor de Imágenes\n(EN PROCESO)", 
+            "Visor de Imágenes\n(Por implementar)", 
             "Próximamente", 
             JOptionPane.INFORMATION_MESSAGE);
     }
     
     private void abrirReproductor() {
         JOptionPane.showMessageDialog(this, 
-            "Reproductor de Música\n(EN PROCESO)", 
+            "Reproductor de Música\n(Por implementar)", 
             "Próximamente", 
             JOptionPane.INFORMATION_MESSAGE);
     }
     
     private void gestionarUsuarios() {
         JOptionPane.showMessageDialog(this, 
-            "Gestión de Usuarios\n(EN PROCESO)", 
+            "Gestión de Usuarios\n(Por implementar)", 
             "Próximamente", 
             JOptionPane.INFORMATION_MESSAGE);
     }
