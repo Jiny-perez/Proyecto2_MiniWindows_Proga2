@@ -6,6 +6,9 @@ package MiniWindows;
 
 import Sistema.MiniWindowsClass;
 import Modelo.Usuario;
+import VisorImagenes.GUIVisorImagenes;
+import CMD.GUICMD;
+import EditorTexto.GUIEditor;
 
 import javax.swing.*;
 import java.awt.*;
@@ -160,38 +163,93 @@ public class VentanaPrincipal extends JFrame {
         });
     }
     
-    // Aplicaciones - EN PROCESO
     private void abrirNavegador() {
         NavegadorArchivos navegador = new NavegadorArchivos(this, usuarioActual, sistema);
         navegador.setVisible(true);
     }
     
     private void abrirCMD() {
-        JOptionPane.showMessageDialog(this, 
-            "Consola CMD\n(Por implementar)", 
-            "Próximamente", 
-            JOptionPane.INFORMATION_MESSAGE);
+        try {
+            // Crear instancia de la consola CMD
+            new GUICMD();
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this,
+                "Error al abrir la consola CMD: " + e.getMessage(),
+                "Error",
+                JOptionPane.ERROR_MESSAGE);
+        }
     }
     
     private void abrirEditor() {
-        JOptionPane.showMessageDialog(this, 
-            "Editor de Texto\n(Por implementar)", 
-            "Próximamente", 
-            JOptionPane.INFORMATION_MESSAGE);
+        try {
+            // Crear instancia del Editor de Texto
+            new GUIEditor();
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this,
+                "Error al abrir el editor de texto: " + e.getMessage(),
+                "Error",
+                JOptionPane.ERROR_MESSAGE);
+        }
     }
     
     private void abrirVisorImagenes() {
-        JOptionPane.showMessageDialog(this, 
-            "Visor de Imágenes\n(Por implementar)", 
-            "Próximamente", 
-            JOptionPane.INFORMATION_MESSAGE);
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("Seleccionar Imagen");
+        fileChooser.setFileFilter(new javax.swing.filechooser.FileFilter() {
+            @Override
+            public boolean accept(java.io.File f) {
+                if (f.isDirectory()) {
+                    return true;
+                }
+                String nombre = f.getName().toLowerCase();
+                return nombre.endsWith(".jpg") || nombre.endsWith(".jpeg") || 
+                       nombre.endsWith(".png") || nombre.endsWith(".gif") ||
+                       nombre.endsWith(".bmp") || nombre.endsWith(".webp");
+            }
+            
+            @Override
+            public String getDescription() {
+                return "Archivos de imagen (*.jpg, *.png, *.gif, *.bmp)";
+            }
+        });
+        
+        int resultado = fileChooser.showOpenDialog(this);
+        
+        if (resultado == JFileChooser.APPROVE_OPTION) {
+            java.io.File archivo = fileChooser.getSelectedFile();
+            try {
+                GUIVisorImagenes visor = new GUIVisorImagenes(archivo);
+                visor.setVisible(true);
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(this,
+                    "Error al abrir el visor de imágenes: " + e.getMessage(),
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
+            }
+        }
     }
     
     private void abrirReproductor() {
-        JOptionPane.showMessageDialog(this, 
-            "Reproductor de Música\n(Por implementar)", 
-            "Próximamente", 
+        // Temporalmente comentado - requiere librerías externas (JLayer, JAudioTagger)
+        JOptionPane.showMessageDialog(this,
+            "Reproductor de Música\n\n" +
+            "Para usar el reproductor necesitas agregar las librerías:\n" +
+            "- JLayer (javazoom)\n" +
+            "- JAudioTagger\n\n" +
+            "Consulta con tu compañera sobre las librerías.",
+            "Librerías Requeridas",
             JOptionPane.INFORMATION_MESSAGE);
+        
+        /* CÓDIGO ORIGINAL (requiere librerías):
+        try {
+            new GUIReproductorMusica();
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this,
+                "Error al abrir el reproductor de música: " + e.getMessage(),
+                "Error",
+                JOptionPane.ERROR_MESSAGE);
+        }
+        */
     }
     
     private void gestionarUsuarios() {

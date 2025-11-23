@@ -9,6 +9,7 @@ import Sistema.SistemaArchivos;
 import Modelo.ArchivoVirtual;
 import Modelo.Usuario;
 import Excepciones.*;
+import VisorImagenes.GUIVisorImagenes;
 
 import javax.swing.*;
 import javax.swing.tree.*;
@@ -17,6 +18,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
+import java.io.File;
 
 /**
  *
@@ -383,7 +385,7 @@ public class NavegadorArchivos extends JDialog {
         
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         
-        g2d.setColor(new Color(255, 193, 7)); // Amarillo
+        g2d.setColor(new Color(255, 193, 7));
         g2d.fillRect(1, 4, 6, 2);
         
         g2d.fillRect(1, 6, 14, 8);
@@ -662,6 +664,36 @@ public class NavegadorArchivos extends JDialog {
         
         if (archivo.isEsCarpeta()) {
             navegarACarpeta(archivo);
+        } else {
+            String nombre = archivo.getNombre().toLowerCase();
+            
+            if (nombre.endsWith(".jpg") || nombre.endsWith(".jpeg") || 
+                nombre.endsWith(".png") || nombre.endsWith(".gif") ||
+                nombre.endsWith(".bmp") || nombre.endsWith(".webp")) {
+                
+                abrirVisorImagenes(archivo);
+            } else {
+                JOptionPane.showMessageDialog(this,
+                    "No hay una aplicación configurada para abrir este tipo de archivo.",
+                    "Archivo no soportado",
+                    JOptionPane.INFORMATION_MESSAGE);
+            }
+        }
+    }
+    
+    private void abrirVisorImagenes(ArchivoVirtual archivo) {
+        File archivoReal = new File(archivo.getRutaCompleta());
+        
+        if (!archivoReal.exists()) {
+            mostrarError("Error", "La imagen no existe en el sistema de archivos real");
+            return;
+        }
+        
+        try {
+            GUIVisorImagenes visor = new GUIVisorImagenes(archivoReal);
+            visor.setVisible(true);
+        } catch (Exception e) {
+            mostrarError("Error al abrir imagen", e.getMessage());
         }
     }
     
@@ -745,10 +777,9 @@ public class NavegadorArchivos extends JDialog {
             g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             
             if (abierta) {
-                
                 g2d.setColor(new Color(255, 193, 7));
                 g2d.fillRect(1, 3, 6, 3);
-
+                
                 int[] xPoints = {1, 15, 14, 2};
                 int[] yPoints = {6, 6, 14, 14};
                 g2d.fillPolygon(xPoints, yPoints, 4);
