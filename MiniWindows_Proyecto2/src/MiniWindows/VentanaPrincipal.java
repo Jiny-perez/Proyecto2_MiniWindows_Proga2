@@ -170,7 +170,6 @@ public class VentanaPrincipal extends JFrame {
     
     private void abrirCMD() {
         try {
-            // Crear instancia de la consola CMD
             new GUICMD();
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this,
@@ -182,7 +181,6 @@ public class VentanaPrincipal extends JFrame {
     
     private void abrirEditor() {
         try {
-            // Crear instancia del Editor de Texto
             new GUIEditor();
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this,
@@ -235,9 +233,7 @@ public class VentanaPrincipal extends JFrame {
             "Reproductor de Música\n\n" +
             "Para usar el reproductor necesitas agregar las librerías:\n" +
             "- JLayer (javazoom)\n" +
-            "- JAudioTagger\n\n" +
-            "Consulta con tu compañera sobre las librerías.",
-            "Librerías Requeridas",
+            "- JAudioTagger\n" +
             JOptionPane.INFORMATION_MESSAGE);
         
         /* CÓDIGO ORIGINAL (requiere librerías):
