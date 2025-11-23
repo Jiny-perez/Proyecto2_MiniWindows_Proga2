@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package MiniWindows;
 
 import Sistema.MiniWindowsClass;
@@ -9,6 +5,7 @@ import Modelo.Usuario;
 import VisorImagenes.GUIVisorImagenes;
 import CMD.GUICMD;
 import EditorTexto.GUIEditor;
+import ReproductorMusical.GUIReproductorMusica;
 
 import javax.swing.*;
 import java.awt.*;
@@ -228,15 +225,6 @@ public class VentanaPrincipal extends JFrame {
     }
     
     private void abrirReproductor() {
-        // Temporalmente comentado - requiere librerías externas (JLayer, JAudioTagger)
-        JOptionPane.showMessageDialog(this,
-            "Reproductor de Música\n\n" +
-            "Para usar el reproductor necesitas agregar las librerías:\n" +
-            "- JLayer (javazoom)\n" +
-            "- JAudioTagger\n" +
-            JOptionPane.INFORMATION_MESSAGE);
-        
-        /* CÓDIGO ORIGINAL (requiere librerías):
         try {
             new GUIReproductorMusica();
         } catch (Exception e) {
@@ -245,7 +233,6 @@ public class VentanaPrincipal extends JFrame {
                 "Error",
                 JOptionPane.ERROR_MESSAGE);
         }
-        */
     }
     
     private void gestionarUsuarios() {
