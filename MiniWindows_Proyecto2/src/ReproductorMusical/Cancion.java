@@ -2,7 +2,6 @@ package ReproductorMusical;
 
 import java.io.*;
 import javax.swing.*;
-import org.jaudiotagger.audio.*;
 
 /**
  *
@@ -18,7 +17,7 @@ public class Cancion {
     public Cancion(String titulo, String direccion) {
         this.titulo = titulo;
         this.direccion = direccion;
-        this.duracion = calcularDuracionMP3();
+        this.duracion = 0;
     }
 
     public void setTitulo(String titulo) {
@@ -46,25 +45,6 @@ public class Cancion {
             imgDefault = imgDefault();
         }
         return imgDefault;
-    }
-
-    private long calcularDuracionMP3() {
-        try {
-            File archivoMP3 = new File(this.direccion);
-            if (!archivoMP3.exists()) {
-                return 0;
-            }
-
-            AudioFile audioFile = AudioFileIO.read(archivoMP3);
-            AudioHeader audioHeader = audioFile.getAudioHeader();
-
-            if (audioHeader != null) {
-                return audioHeader.getTrackLength();
-            }
-        } catch (Exception e) {
-            System.err.println("Error al leer duración de: " + this.direccion);
-        }
-        return 0;
     }
 
     public String DuracionFormateada() {

@@ -1,5 +1,8 @@
 package ReproductorMusical;
 
+import Sistema.MiniWindowsClass;
+import Sistema.SistemaArchivos;
+import Modelo.ArchivoVirtual;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
@@ -17,7 +20,7 @@ public class GUIReproductorMusica {
 
     JList<Cancion> JListaCanciones;
     DefaultListModel<Cancion> listModel;
-    JButton btnAgregar;
+    JButton btnActualizar;
     JLabel lblListaVacia;
 
     public GUIReproductorMusica() {
@@ -25,12 +28,12 @@ public class GUIReproductorMusica {
         gestionMusica = new GestionMusica();
         reproductor = new Reproductor();
         initComponents();
-        cargarCanciones();
+        cargarCancionesDesdeNavegador();
     }
 
     public void initComponents() {
         JFrame VReproductorMusica = new JFrame("Reproductor de Música");
-        VReproductorMusica.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        VReproductorMusica.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         VReproductorMusica.setSize(900, 700);
         VReproductorMusica.setLocationRelativeTo(null);
         VReproductorMusica.setLayout(new BorderLayout());
@@ -83,7 +86,7 @@ public class GUIReproductorMusica {
         JPanel panelListaContenedor = new JPanel(new CardLayout());
         panelListaContenedor.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
 
-        lblListaVacia = new JLabel("No hay ninguna canción agregada", SwingConstants.CENTER);
+        lblListaVacia = new JLabel("No hay canciones en la carpeta Musica", SwingConstants.CENTER);
         lblListaVacia.setForeground(new Color(179, 179, 179));
         lblListaVacia.setFont(new Font("Arial", Font.ITALIC, 16));
         lblListaVacia.setBackground(new Color(18, 18, 18));
@@ -93,31 +96,31 @@ public class GUIReproductorMusica {
         panelListaContenedor.add(lblListaVacia, "Vacia");
         PPrincipal.add(panelListaContenedor, BorderLayout.CENTER);
 
-        btnAgregar = new JButton("Agregar Canción");
-        btnAgregar.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        btnAgregar.setBackground(new Color(29, 185, 84));
-        btnAgregar.setForeground(Color.WHITE);
-        btnAgregar.setFocusPainted(false);
-        btnAgregar.setBorderPainted(false);
-        btnAgregar.setContentAreaFilled(true);
-        btnAgregar.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        btnAgregar.setPreferredSize(new Dimension(890, 40));
+        btnActualizar = new JButton("Actualizar Lista");
+        btnActualizar.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        btnActualizar.setBackground(new Color(29, 185, 84));
+        btnActualizar.setForeground(Color.WHITE);
+        btnActualizar.setFocusPainted(false);
+        btnActualizar.setBorderPainted(false);
+        btnActualizar.setContentAreaFilled(true);
+        btnActualizar.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btnActualizar.setPreferredSize(new Dimension(890, 40));
 
-        btnAgregar.addMouseListener(new MouseAdapter() {
+        btnActualizar.addMouseListener(new MouseAdapter() {
             public void mouseEntered(MouseEvent e) {
-                btnAgregar.setBackground(new Color(29, 185, 84).darker());
+                btnActualizar.setBackground(new Color(29, 185, 84).darker());
             }
 
             public void mouseExited(MouseEvent e) {
-                btnAgregar.setBackground(new Color(29, 185, 84));
+                btnActualizar.setBackground(new Color(29, 185, 84));
             }
         });
 
-        btnAgregar.addActionListener(e -> agregarCancion());
+        btnActualizar.addActionListener(e -> cargarCancionesDesdeNavegador());
 
         JPanel panelBoton = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
         panelBoton.setBackground(new Color(18, 18, 18));
-        panelBoton.add(btnAgregar);
+        panelBoton.add(btnActualizar);
 
         JPanel panelSouth = new JPanel();
         panelSouth.setLayout(new BoxLayout(panelSouth, BoxLayout.Y_AXIS));
@@ -134,9 +137,55 @@ public class GUIReproductorMusica {
 
         VReproductorMusica.add(PPrincipal);
         VReproductorMusica.setVisible(true);
+        
+        actualizarVista();
     }
 
-    private void cargarCanciones() {
+    private void cargarCancionesDesdeNavegador() {
+        listaCanciones = new ListaCanciones();
+        
+        try {
+            MiniWindowsClass sistema = MiniWindowsClass.getInstance();
+            SistemaArchivos sistemaArchivos = sistema.getSistemaArchivos();
+            String username = sistema.getUsuarioActual().getUsername();
+            
+            ArchivoVirtual raiz = sistemaArchivos.getRaiz();
+            ArchivoVirtual carpetaUsuario = raiz.buscarHijo(username);
+            
+            if (carpetaUsuario != null) {
+                ArchivoVirtual carpetaMusica = carpetaUsuario.buscarHijo("Musica");
+                
+                if (carpetaMusica != null && carpetaMusica.getHijos() != null) {
+                    for (ArchivoVirtual archivo : carpetaMusica.getHijos()) {
+                        if (!archivo.isEsCarpeta()) {
+                            String nombre = archivo.getNombre().toLowerCase();
+                            if (nombre.endsWith(".mp3")) {
+                                String rutaVirtual = archivo.getRutaCompleta();
+                                rutaVirtual = rutaVirtual.replace("Z:", "").replace("Z:\\", "");
+                                if (rutaVirtual.startsWith("\\")) {
+                                    rutaVirtual = rutaVirtual.substring(1);
+                                }
+                                
+                                File archivoFisico = new File(rutaVirtual);
+                                if (archivoFisico.exists()) {
+                                    String titulo = archivo.getNombre().replaceFirst("[.][^.]+$", "");
+                                    Cancion cancion = new Cancion(titulo, archivoFisico.getAbsolutePath());
+                                    listaCanciones.addListaCanciones(cancion);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Error al cargar canciones: " + e.getMessage());
+            e.printStackTrace();
+        }
+        
+        actualizarVista();
+    }
+
+    private void actualizarVista() {
         listModel.clear();
         if (listaCanciones != null) {
             int totalCanciones = listaCanciones.tamanio();
@@ -210,36 +259,6 @@ public class GUIReproductorMusica {
                 return panel;
             }
             return super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-        }
-    }
-
-    private void agregarCancion() {
-        JFileChooser fileChooser = new JFileChooser();
-        fileChooser.setDialogTitle("Seleccionar Archivo de Música (MP3)");
-        fileChooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("Archivos MP3 (*.mp3)", "mp3"));
-        int resultado = fileChooser.showOpenDialog(null);
-
-        if (resultado == JFileChooser.APPROVE_OPTION) {
-            File archivoSeleccionado = fileChooser.getSelectedFile();
-            String rutaArchivo = archivoSeleccionado.getAbsolutePath();
-            if (!rutaArchivo.toLowerCase().endsWith(".mp3")) {
-                JOptionPane.showMessageDialog(null, "Por favor, selecciona un archivo de música en formato MP3.", "Error de Formato", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-            try {
-                Cancion nuevaCancion = gestionMusica.crearCancionDesdeArchivo(rutaArchivo);
-                if (nuevaCancion != null) {
-                    listaCanciones.addListaCanciones(nuevaCancion);
-                    gestionMusica.GuardarListaCanciones(listaCanciones);
-                    cargarCanciones();
-                } else {
-                    JOptionPane.showMessageDialog(null, "No se pudo crear el objeto Canción desde el archivo.", "Error", JOptionPane.ERROR_MESSAGE);
-                }
-            } catch (IOException e) {
-                JOptionPane.showMessageDialog(null, "Error al guardar la lista de canciones.", "Error", JOptionPane.ERROR_MESSAGE);
-            } catch (Exception e) {
-                JOptionPane.showMessageDialog(null, "Error al procesar el archivo: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-            }
         }
     }
 

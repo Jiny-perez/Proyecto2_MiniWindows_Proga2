@@ -2,6 +2,7 @@ package MiniWindows;
 
 import Sistema.MiniWindowsClass;
 import Modelo.Usuario;
+import Modelo.ArchivoVirtual;
 import VisorImagenes.GUIVisorImagenes;
 import CMD.GUICMD;
 import EditorTexto.GUIEditor;
@@ -188,40 +189,98 @@ public class VentanaPrincipal extends JFrame {
     }
     
     private void abrirVisorImagenes() {
-        JFileChooser fileChooser = new JFileChooser();
-        fileChooser.setDialogTitle("Seleccionar Imagen");
-        fileChooser.setFileFilter(new javax.swing.filechooser.FileFilter() {
-            @Override
-            public boolean accept(java.io.File f) {
-                if (f.isDirectory()) {
-                    return true;
-                }
-                String nombre = f.getName().toLowerCase();
-                return nombre.endsWith(".jpg") || nombre.endsWith(".jpeg") || 
-                       nombre.endsWith(".png") || nombre.endsWith(".gif") ||
-                       nombre.endsWith(".bmp") || nombre.endsWith(".webp");
+        ArchivoVirtual carpetaImagenes = buscarCarpetaImagenes();
+        
+        if (carpetaImagenes == null) {
+            JOptionPane.showMessageDialog(this,
+                "No se encontró la carpeta 'Mis Imagenes' del usuario.\n" +
+                "Por favor, sube imágenes usando el Navegador de Archivos.",
+                "Carpeta no encontrada",
+                JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        
+        if (carpetaImagenes.getHijos() == null || carpetaImagenes.getHijos().isEmpty()) {
+            JOptionPane.showMessageDialog(this,
+                "La carpeta 'Mis Imagenes' está vacía.\n" +
+                "Sube imágenes usando el Navegador de Archivos primero.",
+                "Sin imágenes",
+                JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+        
+        ArchivoVirtual primeraImagen = buscarPrimeraImagen(carpetaImagenes);
+        
+        if (primeraImagen == null) {
+            JOptionPane.showMessageDialog(this,
+                "No se encontraron imágenes en la carpeta 'Mis Imagenes'.\n" +
+                "Formatos soportados: jpg, jpeg, png, gif, bmp, webp",
+                "Sin imágenes",
+                JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+        
+        java.io.File archivoReal = new java.io.File(primeraImagen.getRutaCompleta());
+        
+        if (!archivoReal.exists()) {
+            String rutaAlternativa = primeraImagen.getRutaCompleta().replace("Z:", "").replace("Z:\\", "");
+            if (rutaAlternativa.startsWith("\\")) {
+                rutaAlternativa = rutaAlternativa.substring(1);
             }
+            archivoReal = new java.io.File(rutaAlternativa);
+        }
+        
+        if (!archivoReal.exists()) {
+            JOptionPane.showMessageDialog(this,
+                "Error: La imagen no existe físicamente.\n" +
+                "Ruta esperada: " + archivoReal.getAbsolutePath(),
+                "Error",
+                JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        
+        try {
+            GUIVisorImagenes visor = new GUIVisorImagenes(archivoReal);
+            visor.setVisible(true);
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this,
+                "Error al abrir el visor de imágenes: " + e.getMessage(),
+                "Error",
+                JOptionPane.ERROR_MESSAGE);
+            e.printStackTrace();
+        }
+    }
+    
+    private ArchivoVirtual buscarCarpetaImagenes() {
+        try {
+            ArchivoVirtual raiz = sistema.getSistemaArchivos().getRaiz();
+            ArchivoVirtual carpetaUsuario = raiz.buscarHijo(usuarioActual.getUsername());
             
-            @Override
-            public String getDescription() {
-                return "Archivos de imagen (*.jpg, *.png, *.gif, *.bmp)";
+            if (carpetaUsuario != null) {
+                return carpetaUsuario.buscarHijo("Mis Imagenes");
             }
-        });
+        } catch (Exception e) {
+            System.err.println("Error buscando carpeta de imágenes: " + e.getMessage());
+        }
+        return null;
+    }
+    
+    private ArchivoVirtual buscarPrimeraImagen(ArchivoVirtual carpeta) {
+        if (carpeta == null || carpeta.getHijos() == null) {
+            return null;
+        }
         
-        int resultado = fileChooser.showOpenDialog(this);
-        
-        if (resultado == JFileChooser.APPROVE_OPTION) {
-            java.io.File archivo = fileChooser.getSelectedFile();
-            try {
-                GUIVisorImagenes visor = new GUIVisorImagenes(archivo);
-                visor.setVisible(true);
-            } catch (Exception e) {
-                JOptionPane.showMessageDialog(this,
-                    "Error al abrir el visor de imágenes: " + e.getMessage(),
-                    "Error",
-                    JOptionPane.ERROR_MESSAGE);
+        for (ArchivoVirtual archivo : carpeta.getHijos()) {
+            if (!archivo.isEsCarpeta()) {
+                String nombre = archivo.getNombre().toLowerCase();
+                if (nombre.endsWith(".jpg") || nombre.endsWith(".jpeg") || 
+                    nombre.endsWith(".png") || nombre.endsWith(".gif") ||
+                    nombre.endsWith(".bmp") || nombre.endsWith(".webp")) {
+                    return archivo;
+                }
             }
         }
+        return null;
     }
     
     private void abrirReproductor() {

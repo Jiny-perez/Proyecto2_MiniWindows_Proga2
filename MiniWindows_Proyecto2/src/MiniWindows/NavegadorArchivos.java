@@ -19,13 +19,15 @@ import java.awt.event.*;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 
 /**
  *
  * @author najma
  */
-public class NavegadorArchivos extends JDialog {
-    
+public class NavegadorArchivos extends JFrame {
+   
     private MiniWindowsClass sistema;
     private SistemaArchivos sistemaArchivos;
     private Usuario usuarioActual;
@@ -51,7 +53,7 @@ public class NavegadorArchivos extends JDialog {
     private JButton btnActualizar;
     
     public NavegadorArchivos(JFrame parent, Usuario usuario, MiniWindowsClass sistema) {
-        super(parent, "Navegador de Archivos - Mini-Windows", true);
+        super("Navegador de Archivos - Mini-Windows");
         
         this.usuarioActual = usuario;
         this.sistema = sistema;
@@ -373,7 +375,7 @@ public class NavegadorArchivos extends JDialog {
     private void configurarVentana() {
         setSize(Toolkit.getDefaultToolkit().getScreenSize());
         setLocationRelativeTo(getOwner());
-        setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
     }
     
     private ImageIcon crearIconoCarpetaTabla() {
@@ -443,7 +445,7 @@ public class NavegadorArchivos extends JDialog {
             Object[] fila = new Object[4];
             
             if (archivo.isEsCarpeta()) {
-                fila[0] = "\u25B6 " + archivo.getNombre();  // ▶ Carpeta
+                fila[0] = "\u25B6 " + archivo.getNombre();
             } else {
                 fila[0] = archivo.getNombre();
             }
@@ -487,7 +489,7 @@ public class NavegadorArchivos extends JDialog {
                 Object[] fila = new Object[4];
                 
                 if (archivo.isEsCarpeta()) {
-                    fila[0] = "\u25B6 " + archivo.getNombre();  // ▶ Carpeta
+                    fila[0] = "\u25B6 " + archivo.getNombre();
                 } else {
                     fila[0] = archivo.getNombre();
                 }
@@ -509,6 +511,16 @@ public class NavegadorArchivos extends JDialog {
         if (nombre != null && !nombre.trim().isEmpty()) {
             try {
                 sistemaArchivos.crearCarpeta(nombre.trim());
+                
+                String rutaVirtual = sistemaArchivos.getCarpetaActual().getRutaCompleta();
+                rutaVirtual = rutaVirtual.replace("Z:", "").replace("Z:\\", "");
+                if (rutaVirtual.startsWith("\\")) {
+                    rutaVirtual = rutaVirtual.substring(1);
+                }
+                
+                File carpetaFisica = new File(rutaVirtual, nombre.trim());
+                carpetaFisica.mkdirs();
+                
                 actualizarVista();
                 mostrarExito("Carpeta creada exitosamente");
             } catch (ArchivoNoValidoException e) {
@@ -525,25 +537,48 @@ public class NavegadorArchivos extends JDialog {
         int resultado = fileChooser.showOpenDialog(this);
         
         if (resultado == JFileChooser.APPROVE_OPTION) {
-            java.io.File archivoReal = fileChooser.getSelectedFile();
+            File archivoSeleccionado = fileChooser.getSelectedFile();
             
-            String nombreArchivo = archivoReal.getName();
-            long tamanio = archivoReal.length();
-            String extension = obtenerExtension(nombreArchivo);
-            String tipoArchivo = determinarTipo(extension);
+            String rutaVirtual = sistemaArchivos.getCarpetaActual().getRutaCompleta();
+            rutaVirtual = rutaVirtual.replace("Z:", "").replace("Z:\\", "");
+            if (rutaVirtual.startsWith("\\")) {
+                rutaVirtual = rutaVirtual.substring(1);
+            }
+            
+            File carpetaDestino = new File(rutaVirtual);
+            if (!carpetaDestino.exists()) {
+                carpetaDestino.mkdirs();
+            }
+            
+            File archivoDestino = new File(carpetaDestino, archivoSeleccionado.getName());
             
             try {
+                Files.copy(
+                    archivoSeleccionado.toPath(),
+                    archivoDestino.toPath(),
+                    StandardCopyOption.REPLACE_EXISTING
+                );
+                
+                String nombreArchivo = archivoSeleccionado.getName();
+                long tamanio = archivoSeleccionado.length();
+                String extension = obtenerExtension(nombreArchivo);
+                String tipoArchivo = determinarTipo(extension);
+                
                 sistemaArchivos.crearArchivo(nombreArchivo, tipoArchivo, "");
                 
                 ArchivoVirtual archivoVirtual = sistemaArchivos.obtenerArchivo(nombreArchivo);
                 if (archivoVirtual != null) {
                     archivoVirtual.setTamanio(tamanio);
+                    
+                    String rutaFisicaCorrecta = archivoDestino.getAbsolutePath();
+                    archivoVirtual.setRutaCompleta(rutaFisicaCorrecta);
                 }
                 
                 actualizarVista();
                 mostrarExito("Archivo '" + nombreArchivo + "' subido exitosamente");
-            } catch (ArchivoNoValidoException e) {
+            } catch (Exception e) {
                 mostrarError("Error al subir archivo", e.getMessage());
+                e.printStackTrace();
             }
         }
     }
@@ -611,12 +646,42 @@ public class NavegadorArchivos extends JDialog {
         if (confirmacion == JOptionPane.YES_OPTION) {
             try {
                 sistemaArchivos.eliminar(nombre);
+                
+                String rutaVirtual = archivo.getRutaCompleta();
+                rutaVirtual = rutaVirtual.replace("Z:", "").replace("Z:\\", "");
+                if (rutaVirtual.startsWith("\\")) {
+                    rutaVirtual = rutaVirtual.substring(1);
+                }
+                
+                File archivoFisico = new File(rutaVirtual);
+                if (archivoFisico.exists()) {
+                    if (archivoFisico.isDirectory()) {
+                        eliminarDirectorioRecursivo(archivoFisico);
+                    } else {
+                        archivoFisico.delete();
+                    }
+                }
+                
                 actualizarVista();
                 mostrarExito("Elemento eliminado exitosamente");
             } catch (ArchivoNoValidoException e) {
                 mostrarError("Error al eliminar", e.getMessage());
             }
         }
+    }
+    
+    private void eliminarDirectorioRecursivo(File directorio) {
+        File[] archivos = directorio.listFiles();
+        if (archivos != null) {
+            for (File archivo : archivos) {
+                if (archivo.isDirectory()) {
+                    eliminarDirectorioRecursivo(archivo);
+                } else {
+                    archivo.delete();
+                }
+            }
+        }
+        directorio.delete();
     }
     
     private void renombrarSeleccionado() {
@@ -641,6 +706,19 @@ public class NavegadorArchivos extends JDialog {
         if (nombreNuevo != null && !nombreNuevo.trim().isEmpty() && !nombreNuevo.equals(nombreActual)) {
             try {
                 sistemaArchivos.renombrar(nombreActual, nombreNuevo.trim());
+                
+                String rutaVirtual = archivo.getRutaCompleta();
+                rutaVirtual = rutaVirtual.replace("Z:", "").replace("Z:\\", "");
+                if (rutaVirtual.startsWith("\\")) {
+                    rutaVirtual = rutaVirtual.substring(1);
+                }
+                
+                File archivoFisicoAntiguo = new File(rutaVirtual);
+                if (archivoFisicoAntiguo.exists()) {
+                    File archivoFisicoNuevo = new File(archivoFisicoAntiguo.getParent(), nombreNuevo.trim());
+                    archivoFisicoAntiguo.renameTo(archivoFisicoNuevo);
+                }
+                
                 actualizarVista();
                 mostrarExito("Elemento renombrado exitosamente");
             } catch (ArchivoNoValidoException e) {
@@ -682,7 +760,13 @@ public class NavegadorArchivos extends JDialog {
     }
     
     private void abrirVisorImagenes(ArchivoVirtual archivo) {
-        File archivoReal = new File(archivo.getRutaCompleta());
+        String rutaVirtual = archivo.getRutaCompleta();
+        rutaVirtual = rutaVirtual.replace("Z:", "").replace("Z:\\", "");
+        if (rutaVirtual.startsWith("\\")) {
+            rutaVirtual = rutaVirtual.substring(1);
+        }
+        
+        File archivoReal = new File(rutaVirtual);
         
         if (!archivoReal.exists()) {
             mostrarError("Error", "La imagen no existe en el sistema de archivos real");
@@ -762,7 +846,6 @@ public class NavegadorArchivos extends JDialog {
             label.setOpaque(true);
             label.setFont(new Font("Segoe UI", Font.PLAIN, 11));
             
-            // Crear iconos de carpetas dibujados
             iconoCarpetaCerrada = crearIconoCarpeta(false);
             iconoCarpetaAbierta = crearIconoCarpeta(true);
         }
@@ -792,7 +875,6 @@ public class NavegadorArchivos extends JDialog {
                 g2d.drawLine(2, 7, 14, 7);
                 
             } else {
-
                 g2d.setColor(new Color(255, 193, 7));
                 g2d.fillRect(1, 4, 6, 2);
                 
