@@ -20,7 +20,7 @@ public class GUIReproductorMusica {
 
     JList<Cancion> JListaCanciones;
     DefaultListModel<Cancion> listModel;
-    JButton btnActualizar;
+    JButton btnAgregarCancion;
     JLabel lblListaVacia;
 
     public GUIReproductorMusica() {
@@ -28,7 +28,7 @@ public class GUIReproductorMusica {
         gestionMusica = new GestionMusica();
         reproductor = new Reproductor();
         initComponents();
-        cargarCancionesDesdeNavegador();
+        cargarCanciones();
     }
 
     public void initComponents() {
@@ -39,15 +39,14 @@ public class GUIReproductorMusica {
         VReproductorMusica.setLayout(new BorderLayout());
         VReproductorMusica.getContentPane().setBackground(new Color(18, 18, 18));
 
-        JPanel PPrincipal = new JPanel(new BorderLayout());
-        PPrincipal.setBackground(new Color(18, 18, 18));
-
+        JPanel panelPrincipal = new JPanel(new BorderLayout());
+        panelPrincipal.setBackground(new Color(18, 18, 18));
         JLabel lblTitulo = new JLabel("Biblioteca de Música", SwingConstants.CENTER);
         lblTitulo.setForeground(Color.white);
         lblTitulo.setFont(new Font("Arial", Font.BOLD, 30));
         lblTitulo.setBorder(BorderFactory.createEmptyBorder(30, 20, 30, 20));
-        PPrincipal.add(lblTitulo, BorderLayout.NORTH);
 
+        panelPrincipal.add(lblTitulo, BorderLayout.NORTH);
         listModel = new DefaultListModel<>();
         JListaCanciones = new JList<>(listModel);
         JListaCanciones.setCellRenderer(new CancionListCellRenderer());
@@ -82,7 +81,6 @@ public class GUIReproductorMusica {
         JScrollPane scrollPane = new JScrollPane(JListaCanciones);
         scrollPane.getViewport().setBackground(new Color(18, 18, 18));
         scrollPane.setBorder(BorderFactory.createEmptyBorder());
-
         JPanel panelListaContenedor = new JPanel(new CardLayout());
         panelListaContenedor.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
 
@@ -91,117 +89,255 @@ public class GUIReproductorMusica {
         lblListaVacia.setFont(new Font("Arial", Font.ITALIC, 16));
         lblListaVacia.setBackground(new Color(18, 18, 18));
         lblListaVacia.setOpaque(true);
-
         panelListaContenedor.add(scrollPane, "Lista");
         panelListaContenedor.add(lblListaVacia, "Vacia");
-        PPrincipal.add(panelListaContenedor, BorderLayout.CENTER);
+        panelPrincipal.add(panelListaContenedor, BorderLayout.CENTER);
 
-        btnActualizar = new JButton("Actualizar Lista");
-        btnActualizar.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        btnActualizar.setBackground(new Color(29, 185, 84));
-        btnActualizar.setForeground(Color.WHITE);
-        btnActualizar.setFocusPainted(false);
-        btnActualizar.setBorderPainted(false);
-        btnActualizar.setContentAreaFilled(true);
-        btnActualizar.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        btnActualizar.setPreferredSize(new Dimension(890, 40));
+        btnAgregarCancion = new JButton("Agregar Cancion");
+        btnAgregarCancion.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        btnAgregarCancion.setBackground(new Color(29, 185, 84));
+        btnAgregarCancion.setForeground(Color.WHITE);
+        btnAgregarCancion.setFocusPainted(false);
+        btnAgregarCancion.setBorderPainted(false);
+        btnAgregarCancion.setContentAreaFilled(true);
+        btnAgregarCancion.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btnAgregarCancion.setPreferredSize(new Dimension(890, 40));
 
-        btnActualizar.addMouseListener(new MouseAdapter() {
+        btnAgregarCancion.addMouseListener(new MouseAdapter() {
             public void mouseEntered(MouseEvent e) {
-                btnActualizar.setBackground(new Color(29, 185, 84).darker());
+                btnAgregarCancion.setBackground(new Color(29, 185, 84).darker());
             }
 
             public void mouseExited(MouseEvent e) {
-                btnActualizar.setBackground(new Color(29, 185, 84));
+                btnAgregarCancion.setBackground(new Color(29, 185, 84));
             }
         });
 
-        btnActualizar.addActionListener(e -> cargarCancionesDesdeNavegador());
+        btnAgregarCancion.addActionListener(e -> agregarCancionSO());
 
         JPanel panelBoton = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
         panelBoton.setBackground(new Color(18, 18, 18));
-        panelBoton.add(btnActualizar);
+        panelBoton.add(btnAgregarCancion);
 
-        JPanel panelSouth = new JPanel();
-        panelSouth.setLayout(new BoxLayout(panelSouth, BoxLayout.Y_AXIS));
-        panelSouth.setBackground(new Color(18, 18, 18));
+        JPanel panelBarraReproduccion = new JPanel();
+        panelBarraReproduccion.setLayout(new BoxLayout(panelBarraReproduccion, BoxLayout.Y_AXIS));
+        panelBarraReproduccion.setBackground(new Color(18, 18, 18));
 
         JPanel panelReproductor = reproductor.getPanel();
         panelReproductor.setAlignmentX(Component.CENTER_ALIGNMENT);
+        panelBarraReproduccion.add(panelReproductor);
+        panelBarraReproduccion.add(Box.createRigidArea(new Dimension(0, 8)));
+        panelBarraReproduccion.add(panelBoton);
 
-        panelSouth.add(panelReproductor);
-        panelSouth.add(Box.createRigidArea(new Dimension(0, 8)));
-        panelSouth.add(panelBoton);
-
-        PPrincipal.add(panelSouth, BorderLayout.SOUTH);
-
-        VReproductorMusica.add(PPrincipal);
+        panelPrincipal.add(panelBarraReproduccion, BorderLayout.SOUTH);
+        VReproductorMusica.add(panelPrincipal);
         VReproductorMusica.setVisible(true);
-        
         actualizarVista();
     }
 
-    private void cargarCancionesDesdeNavegador() {
+    private File fileVirtualToReal(String direccion) {
+        String dirVir = direccion.replace("/", File.separator).replace("\\", File.separator);
+
+        String dirBase = System.getProperty("user.dir") + File.separator + "Z";
+        File dir = new File(dirBase);
+        if (!dir.exists()) {
+            dir.mkdirs();
+        }
+
+        if (dirVir.startsWith("Z:" + File.separator)) {
+            dirVir = dirVir.substring(2);
+            if (dirVir.startsWith(File.separator)) {
+                dirVir = dirVir.substring(1);
+            }
+        }
+
+        return new File(dir, dirVir);
+    }
+
+    private void agregarCancionSO() {
+        JFileChooser chooser = new JFileChooser();
+        chooser.setDialogTitle("Seleccione cancion");
+        chooser.setMultiSelectionEnabled(true);
+        chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        chooser.setAcceptAllFileFilterUsed(false);
+        chooser.setFileFilter(new javax.swing.filechooser.FileFilter() {
+            public boolean accept(File f) {
+                if (f.isDirectory()) {
+                    return true;
+                }
+                String name = f.getName().toLowerCase();
+                return name.endsWith(".mp3");
+            }
+
+            public String getDescription() {
+                return "Archivos MP3 (*.mp3)";
+            }
+        });
+
+        int resultado = chooser.showOpenDialog(null);
+        if (resultado != JFileChooser.APPROVE_OPTION) {
+            return;
+        }
+
+        File[] archivos = chooser.getSelectedFiles();
+        if (archivos == null || archivos.length == 0) {
+            return;
+        }
+
+        if (listaCanciones == null) {
+            listaCanciones = new ListaCanciones();
+        }
+
+        MiniWindowsClass sistema = MiniWindowsClass.getInstance();
+        if (sistema == null || sistema.getUsuarioActual() == null) {
+            return;
+        }
+        String username = sistema.getUsuarioActual().getUsername();
+        SistemaArchivos sistemaArchivos = sistema.getSistemaArchivos();
+        ArchivoVirtual raiz = sistemaArchivos.getRaiz();
+
+        ArchivoVirtual carpetaUsuario = raiz.buscarHijo(username);
+        if (carpetaUsuario == null) {
+            carpetaUsuario = new ArchivoVirtual(username, raiz.getRutaCompleta());
+            raiz.agregarHijo(carpetaUsuario);
+        }
+        ArchivoVirtual carpetaMusica = carpetaUsuario.buscarHijo("Musica");
+        if (carpetaMusica == null) {
+            carpetaMusica = new ArchivoVirtual("Musica", carpetaUsuario.getRutaCompleta());
+            carpetaUsuario.agregarHijo(carpetaMusica);
+        }
+
+        for (File f : archivos) {
+            try {
+                String titulo = f.getName().replaceFirst("[.][^.]+$", "");
+
+                // Construir nuevo ArchivoVirtual (se usa para mantener estructura virtual)
+                ArchivoVirtual nuevoArchivoVirtual = new ArchivoVirtual(f.getName(), carpetaMusica.getRutaCompleta(), "Audio", f.length());
+
+                // Obtener ruta real usando método local
+                String rutaVirtualCompleta = carpetaMusica.getRutaCompleta();
+                // Asegurarnos de que la ruta virtual termina con separador antes de concatenar el nombre
+                if (!rutaVirtualCompleta.endsWith("\\") && !rutaVirtualCompleta.endsWith("/")) {
+                    rutaVirtualCompleta = rutaVirtualCompleta + File.separator;
+                }
+                File archivoDestino = fileVirtualToReal(rutaVirtualCompleta + f.getName());
+
+                // Crear directorio padre si no existe
+                File parent = archivoDestino.getParentFile();
+                if (parent != null && !parent.exists()) {
+                    if (!parent.mkdirs()) {
+                        throw new IOException("No se pudo crear el directorio: " + parent.getAbsolutePath());
+                    }
+                }
+
+                // Copiar fichero
+                try (InputStream in = new FileInputStream(f); OutputStream out = new FileOutputStream(archivoDestino)) {
+                    byte[] buffer = new byte[4096];
+                    int len;
+                    while ((len = in.read(buffer)) != -1) {
+                        out.write(buffer, 0, len);
+                    }
+                }
+
+                // Añadir al árbol virtual
+                carpetaMusica.agregarHijo(nuevoArchivoVirtual);
+
+                // Crear objeto Cancion y cargar en reproductor para obtener duración
+                Cancion nueva = new Cancion(titulo, archivoDestino.getAbsolutePath());
+                reproductor.cargarCancion(nueva);
+                long dur = 0;
+                if (reproductor.getCancionActual() != null) {
+                    dur = reproductor.getCancionActual().getDuracion();
+                }
+                nueva.setDuracion(dur);
+                reproductor.limpiar();
+
+                // Agregar a lista y vista
+                listaCanciones.agregarListaCanciones(nueva);
+                actualizarVista();
+
+                // Persistir en gestionMusica si existe
+                try {
+                    if (gestionMusica != null) {
+                        gestionMusica.agregarCancion(nueva);
+                    }
+                } catch (IOException ioe) {
+                    ioe.printStackTrace();
+                }
+
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+        }
+    }
+
+    private void cargarCanciones() {
         listaCanciones = new ListaCanciones();
-        
         try {
             MiniWindowsClass sistema = MiniWindowsClass.getInstance();
+            if (sistema == null || sistema.getUsuarioActual() == null) {
+                return;
+            }
             SistemaArchivos sistemaArchivos = sistema.getSistemaArchivos();
             String username = sistema.getUsuarioActual().getUsername();
-            
             ArchivoVirtual raiz = sistemaArchivos.getRaiz();
             ArchivoVirtual carpetaUsuario = raiz.buscarHijo(username);
-            
             if (carpetaUsuario != null) {
                 ArchivoVirtual carpetaMusica = carpetaUsuario.buscarHijo("Musica");
-                
                 if (carpetaMusica != null && carpetaMusica.getHijos() != null) {
                     for (ArchivoVirtual archivo : carpetaMusica.getHijos()) {
-                        if (!archivo.isEsCarpeta()) {
-                            String nombre = archivo.getNombre().toLowerCase();
-                            if (nombre.endsWith(".mp3")) {
-                                String rutaVirtual = archivo.getRutaCompleta();
-                                rutaVirtual = rutaVirtual.replace("Z:", "").replace("Z:\\", "");
-                                if (rutaVirtual.startsWith("\\")) {
-                                    rutaVirtual = rutaVirtual.substring(1);
-                                }
-                                
-                                File archivoFisico = new File(rutaVirtual);
-                                if (archivoFisico.exists()) {
-                                    String titulo = archivo.getNombre().replaceFirst("[.][^.]+$", "");
-                                    Cancion cancion = new Cancion(titulo, archivoFisico.getAbsolutePath());
-                                    listaCanciones.addListaCanciones(cancion);
+                        try {
+                            if (!archivo.isEsCarpeta()) {
+                                String nombre = archivo.getNombre().toLowerCase();
+                                if (nombre.endsWith(".mp3")) {
+                                    // Obtener archivo físico usando la ruta virtual del archivo
+                                    String rutaVirtual = archivo.getRutaCompleta();
+                                    File archivoFisico = fileVirtualToReal(rutaVirtual);
+                                    if (archivoFisico.exists()) {
+                                        String titulo = archivo.getNombre().replaceFirst("[.][^.]+$", "");
+                                        Cancion cancion = new Cancion(titulo, archivoFisico.getAbsolutePath());
+                                        // Si quieres obtener la duración aquí, podrías cargar en reproductor como antes:
+                                        listaCanciones.agregarListaCanciones(cancion);
+                                    } else {
+                                        // Si no existe el archivo físico, mostrar aviso (o manejarlo como prefieras)
+                                        System.err.println("Archivo físico no encontrado: " + archivoFisico.getAbsolutePath());
+                                    }
                                 }
                             }
+                        } catch (Exception inner) {
+                            inner.printStackTrace();
                         }
                     }
                 }
             }
         } catch (Exception e) {
-            System.err.println("Error al cargar canciones: " + e.getMessage());
             e.printStackTrace();
         }
-        
         actualizarVista();
     }
 
     private void actualizarVista() {
+
         listModel.clear();
+
         if (listaCanciones != null) {
             int totalCanciones = listaCanciones.tamanio();
             for (int i = 0; i < totalCanciones; i++) {
-                Cancion cancion = listaCanciones.obtenerCancion(i);
+                Cancion cancion = listaCanciones.getCancion(i);
                 if (cancion != null) {
                     listModel.addElement(cancion);
                 }
             }
         }
+
         CardLayout cl = (CardLayout) (lblListaVacia.getParent().getLayout());
+
         if (listModel.isEmpty()) {
             cl.show(lblListaVacia.getParent(), "Vacia");
         } else {
             cl.show(lblListaVacia.getParent(), "Lista");
         }
+
     }
 
     private class CancionListCellRenderer extends DefaultListCellRenderer {

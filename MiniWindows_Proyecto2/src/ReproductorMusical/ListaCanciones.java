@@ -14,8 +14,19 @@ public class ListaCanciones {
         this.canciones = new ArrayList<>();
     }
 
-    public void addListaCanciones(Cancion cancion) {
+    public Cancion getCancion(int index) {
+        if (index < 0 || index >= canciones.size()) {
+            return null;
+        }
+        return canciones.get(index);
+    }
+
+    public void agregarListaCanciones(Cancion cancion) {
         canciones.add(cancion);
+    }
+
+    public int tamanio() {
+        return canciones.size();
     }
 
     public Cancion getPrimeraCancion() {
@@ -25,14 +36,4 @@ public class ListaCanciones {
         return canciones.get(0);
     }
 
-    public int tamanio() {
-        return canciones.size();
-    }
-
-    public Cancion obtenerCancion(int index) {
-        if (index < 0 || index >= canciones.size()) {
-            return null;
-        }
-        return canciones.get(index);
-    }
 }

@@ -36,6 +36,9 @@ public class Cancion {
         return direccion;
     }
 
+     public void setDuracion(long duracion) {
+         this.duracion=duracion;
+    }
     public long getDuracion() {
         return duracion;
     }
