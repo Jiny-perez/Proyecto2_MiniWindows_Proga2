@@ -1,8 +1,6 @@
 package ReproductorMusical;
 
-import Modelo.ArchivoVirtual;
 import Sistema.MiniWindowsClass;
-
 import java.io.*;
 
 /**
@@ -68,18 +66,14 @@ public class GestionMusica {
 
         String dirVirtual = "Z:\\" + username + "\\Musica\\";
 
-        // Convertir carpeta virtual → carpeta real
         File rutaMusicaReal = fileVirtualToReal(dirVirtual);
 
-        // Asegurar que la carpeta existe
         if (!rutaMusicaReal.exists() && !rutaMusicaReal.mkdirs()) {
             throw new IOException("No se pudo crear el directorio: " + rutaMusicaReal.getAbsolutePath());
         }
 
-        // Archivo final dentro de la carpeta Musica
         archivoReal = new File(rutaMusicaReal, "listaCanciones.mp3");
 
-        // Crear si no existe
         File parent = archivoReal.getParentFile();
         if (parent != null && !parent.exists()) {
             if (!parent.mkdirs()) {

@@ -1,12 +1,17 @@
 package ReproductorMusical;
 
+import Excepciones.ArchivoNoValidoException;
 import Sistema.MiniWindowsClass;
 import Sistema.SistemaArchivos;
 import Modelo.ArchivoVirtual;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 
 /**
  *
@@ -156,7 +161,7 @@ public class GUIReproductorMusica {
 
     private void agregarCancionSO() {
         JFileChooser chooser = new JFileChooser();
-        chooser.setDialogTitle("Seleccione cancion");
+        chooser.setDialogTitle("Seleccione canción");
         chooser.setMultiSelectionEnabled(true);
         chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
         chooser.setAcceptAllFileFilterUsed(false);
@@ -165,8 +170,7 @@ public class GUIReproductorMusica {
                 if (f.isDirectory()) {
                     return true;
                 }
-                String name = f.getName().toLowerCase();
-                return name.endsWith(".mp3");
+                return f.getName().toLowerCase().endsWith(".mp3");
             }
 
             public String getDescription() {
@@ -192,74 +196,101 @@ public class GUIReproductorMusica {
         if (sistema == null || sistema.getUsuarioActual() == null) {
             return;
         }
+
         String username = sistema.getUsuarioActual().getUsername();
         SistemaArchivos sistemaArchivos = sistema.getSistemaArchivos();
         ArchivoVirtual raiz = sistemaArchivos.getRaiz();
 
-        ArchivoVirtual carpetaUsuario = raiz.buscarHijo(username);
-        if (carpetaUsuario == null) {
-            carpetaUsuario = new ArchivoVirtual(username, raiz.getRutaCompleta());
-            raiz.agregarHijo(carpetaUsuario);
-        }
-        ArchivoVirtual carpetaMusica = carpetaUsuario.buscarHijo("Musica");
-        if (carpetaMusica == null) {
-            carpetaMusica = new ArchivoVirtual("Musica", carpetaUsuario.getRutaCompleta());
-            carpetaUsuario.agregarHijo(carpetaMusica);
-        }
-
-        for (File f : archivos) {
-            try {
-                String titulo = f.getName().replaceFirst("[.][^.]+$", "");
-
-                ArchivoVirtual nuevoArchivoVirtual = new ArchivoVirtual(f.getName(), carpetaMusica.getRutaCompleta(), "Audio", f.length());
-
-                String rutaVirtualCompleta = carpetaMusica.getRutaCompleta();
-
-                if (!rutaVirtualCompleta.endsWith("\\") && !rutaVirtualCompleta.endsWith("/")) {
-                    rutaVirtualCompleta = rutaVirtualCompleta + File.separator;
-                }
-                File archivoDestino = fileVirtualToReal(rutaVirtualCompleta + f.getName());
-
-                File parent = archivoDestino.getParentFile();
-                if (parent != null && !parent.exists()) {
-                    if (!parent.mkdirs()) {
-                        throw new IOException("No se pudo crear el directorio: " + parent.getAbsolutePath());
-                    }
-                }
-
-                try (InputStream in = new FileInputStream(f); OutputStream out = new FileOutputStream(archivoDestino)) {
-                    byte[] buffer = new byte[4096];
-                    int len;
-                    while ((len = in.read(buffer)) != -1) {
-                        out.write(buffer, 0, len);
-                    }
-                }
-
-                carpetaMusica.agregarHijo(nuevoArchivoVirtual);
-
-                Cancion nueva = new Cancion(titulo, archivoDestino.getAbsolutePath());
-                reproductor.cargarCancion(nueva);
-                long dur = 0;
-                if (reproductor.getCancionActual() != null) {
-                    dur = reproductor.getCancionActual().getDuracion();
-                }
-                nueva.setDuracion(dur);
-                reproductor.limpiar();
-
-                listaCanciones.agregarListaCanciones(nueva);
-                actualizarVista();
-
-                try {
-                    if (gestionMusica != null) {
-                        gestionMusica.agregarCancion(nueva);
-                    }
-                } catch (IOException ioe) {
-                    ioe.printStackTrace();
-                }
-
-            } catch (Exception ex) {
-                ex.printStackTrace();
+        try {
+            String rutaRaiz = raiz.getRutaCompleta();
+            ArchivoVirtual carpetaUsuario = sistemaArchivos.obtenerArchivoEnRuta(username, rutaRaiz);
+            if (carpetaUsuario == null) {
+                sistemaArchivos.crearCarpetaEnRuta(username, rutaRaiz);
+                carpetaUsuario = sistemaArchivos.obtenerArchivoEnRuta(username, rutaRaiz);
             }
+
+            String rutaUsuario = carpetaUsuario.getRutaCompleta();
+            ArchivoVirtual carpetaMusica = sistemaArchivos.obtenerArchivoEnRuta("Musica", rutaUsuario);
+            if (carpetaMusica == null) {
+                sistemaArchivos.crearCarpetaEnRuta("Musica", rutaUsuario);
+                carpetaMusica = sistemaArchivos.obtenerArchivoEnRuta("Musica", rutaUsuario);
+            }
+
+            String rutaVirtualMusica = carpetaMusica.getRutaCompleta();
+
+            for (File f : archivos) {
+                try {
+                    String nombreArchivo = f.getName();
+
+                    ArchivoVirtual repetido = sistemaArchivos.obtenerArchivoEnRuta(nombreArchivo, rutaVirtualMusica);
+                    if (repetido != null) {
+                        JOptionPane.showMessageDialog(
+                                null,
+                                "La canción '" + nombreArchivo + "' ya existe en Música.",
+                                "Archivo duplicado",
+                                JOptionPane.WARNING_MESSAGE
+                        );
+                        continue;
+                    }
+
+                    String rutaVirtualCompleta = rutaVirtualMusica;
+                    if (!rutaVirtualCompleta.endsWith("\\") && !rutaVirtualCompleta.endsWith("/")) {
+                        rutaVirtualCompleta = rutaVirtualCompleta + File.separator;
+                    }
+
+                    File archivoDestino = fileVirtualToReal(rutaVirtualCompleta + nombreArchivo);
+
+                    File parent = archivoDestino.getParentFile();
+                    if (parent != null && !parent.exists()) {
+                        if (!parent.mkdirs()) {
+                            throw new IOException("No se pudo crear el directorio físico: " + parent.getAbsolutePath());
+                        }
+                    }
+
+                    Files.copy(f.toPath(), archivoDestino.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+
+                    long tamanio = archivoDestino.length();
+                    String tipo = "Audio";
+
+                    sistemaArchivos.crearArchivoEnRuta(nombreArchivo, tipo, "", rutaVirtualMusica);
+
+                    ArchivoVirtual creado = sistemaArchivos.obtenerArchivoEnRuta(nombreArchivo, rutaVirtualMusica);
+                    if (creado != null) {
+                        creado.setTamanio(tamanio);
+                        creado.setRutaCompleta(rutaVirtualCompleta + nombreArchivo);
+                    }
+
+                    String titulo = nombreArchivo.replaceFirst("[.][^.]+$", "");
+                    Cancion c = new Cancion(titulo, archivoDestino.getAbsolutePath());
+                    if (reproductor != null) {
+                        try {
+                            reproductor.cargarCancion(c);
+                            if (reproductor.getCancionActual() != null) {
+                                c.setDuracion(reproductor.getCancionActual().getDuracion());
+                            }
+                            reproductor.limpiar();
+                        } catch (Exception e) {
+                            c.setDuracion(0);
+                        }
+                    }
+
+                    listaCanciones.agregarListaCanciones(c);
+
+                    actualizarVista();
+
+                } catch (ArchivoNoValidoException ave) {
+                    JOptionPane.showMessageDialog(null, "No se pudo registrar la canción: " + ave.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                    JOptionPane.showMessageDialog(null, "Error al procesar '" + f.getName() + "': " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+
+        } catch (ArchivoNoValidoException anve) {
+            JOptionPane.showMessageDialog(null, "Error al preparar carpetas de usuario: " + anve.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        } catch (Exception e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(null, "Error inesperado: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -404,9 +435,5 @@ public class GUIReproductorMusica {
             }
             return super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
         }
-    }
-
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> new GUIReproductorMusica());
     }
 }
