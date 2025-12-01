@@ -211,18 +211,15 @@ public class GUIReproductorMusica {
             try {
                 String titulo = f.getName().replaceFirst("[.][^.]+$", "");
 
-                // Construir nuevo ArchivoVirtual (se usa para mantener estructura virtual)
                 ArchivoVirtual nuevoArchivoVirtual = new ArchivoVirtual(f.getName(), carpetaMusica.getRutaCompleta(), "Audio", f.length());
 
-                // Obtener ruta real usando método local
                 String rutaVirtualCompleta = carpetaMusica.getRutaCompleta();
-                // Asegurarnos de que la ruta virtual termina con separador antes de concatenar el nombre
+
                 if (!rutaVirtualCompleta.endsWith("\\") && !rutaVirtualCompleta.endsWith("/")) {
                     rutaVirtualCompleta = rutaVirtualCompleta + File.separator;
                 }
                 File archivoDestino = fileVirtualToReal(rutaVirtualCompleta + f.getName());
 
-                // Crear directorio padre si no existe
                 File parent = archivoDestino.getParentFile();
                 if (parent != null && !parent.exists()) {
                     if (!parent.mkdirs()) {
@@ -230,7 +227,6 @@ public class GUIReproductorMusica {
                     }
                 }
 
-                // Copiar fichero
                 try (InputStream in = new FileInputStream(f); OutputStream out = new FileOutputStream(archivoDestino)) {
                     byte[] buffer = new byte[4096];
                     int len;
@@ -239,10 +235,8 @@ public class GUIReproductorMusica {
                     }
                 }
 
-                // Añadir al árbol virtual
                 carpetaMusica.agregarHijo(nuevoArchivoVirtual);
 
-                // Crear objeto Cancion y cargar en reproductor para obtener duración
                 Cancion nueva = new Cancion(titulo, archivoDestino.getAbsolutePath());
                 reproductor.cargarCancion(nueva);
                 long dur = 0;
@@ -252,11 +246,9 @@ public class GUIReproductorMusica {
                 nueva.setDuracion(dur);
                 reproductor.limpiar();
 
-                // Agregar a lista y vista
                 listaCanciones.agregarListaCanciones(nueva);
                 actualizarVista();
 
-                // Persistir en gestionMusica si existe
                 try {
                     if (gestionMusica != null) {
                         gestionMusica.agregarCancion(nueva);
@@ -272,34 +264,50 @@ public class GUIReproductorMusica {
     }
 
     private void cargarCanciones() {
+
         listaCanciones = new ListaCanciones();
         try {
             MiniWindowsClass sistema = MiniWindowsClass.getInstance();
+
             if (sistema == null || sistema.getUsuarioActual() == null) {
                 return;
             }
+
             SistemaArchivos sistemaArchivos = sistema.getSistemaArchivos();
             String username = sistema.getUsuarioActual().getUsername();
             ArchivoVirtual raiz = sistemaArchivos.getRaiz();
             ArchivoVirtual carpetaUsuario = raiz.buscarHijo(username);
+
             if (carpetaUsuario != null) {
                 ArchivoVirtual carpetaMusica = carpetaUsuario.buscarHijo("Musica");
                 if (carpetaMusica != null && carpetaMusica.getHijos() != null) {
+
                     for (ArchivoVirtual archivo : carpetaMusica.getHijos()) {
                         try {
                             if (!archivo.isEsCarpeta()) {
                                 String nombre = archivo.getNombre().toLowerCase();
                                 if (nombre.endsWith(".mp3")) {
-                                    // Obtener archivo físico usando la ruta virtual del archivo
                                     String rutaVirtual = archivo.getRutaCompleta();
                                     File archivoFisico = fileVirtualToReal(rutaVirtual);
                                     if (archivoFisico.exists()) {
                                         String titulo = archivo.getNombre().replaceFirst("[.][^.]+$", "");
                                         Cancion cancion = new Cancion(titulo, archivoFisico.getAbsolutePath());
-                                        // Si quieres obtener la duración aquí, podrías cargar en reproductor como antes:
+
+                                        try {
+                                            reproductor.cargarCancion(cancion);
+                                            long dur = 0;
+                                            if (reproductor.getCancionActual() != null) {
+                                                dur = reproductor.getCancionActual().getDuracion();
+                                            }
+                                            cancion.setDuracion(dur);
+                                        } catch (Exception ex) {
+                                            ex.printStackTrace();
+                                        } finally {
+                                            reproductor.limpiar();
+                                        }
+
                                         listaCanciones.agregarListaCanciones(cancion);
                                     } else {
-                                        // Si no existe el archivo físico, mostrar aviso (o manejarlo como prefieras)
                                         System.err.println("Archivo físico no encontrado: " + archivoFisico.getAbsolutePath());
                                     }
                                 }

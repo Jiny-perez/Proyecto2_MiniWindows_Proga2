@@ -1,16 +1,10 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package MiniWindows;
-
 import Sistema.MiniWindowsClass;
 import Sistema.SistemaArchivos;
 import Modelo.ArchivoVirtual;
 import Modelo.Usuario;
 import Excepciones.*;
 import VisorImagenes.GUIVisorImagenes;
-
 import javax.swing.*;
 import javax.swing.tree.*;
 import javax.swing.table.*;
@@ -59,12 +53,12 @@ public class NavegadorArchivos extends JFrame {
         this.sistema = sistema;
         this.sistemaArchivos = sistema.getSistemaArchivos();
         
-        inicializarComponentes();
+        initComponents();
         configurarVentana();
         cargarArbol();
     }
     
-    private void inicializarComponentes() {
+    private void initComponents() {
         setLayout(new BorderLayout());
         getContentPane().setBackground(Color.WHITE);
         
@@ -512,14 +506,17 @@ public class NavegadorArchivos extends JFrame {
             try {
                 sistemaArchivos.crearCarpeta(nombre.trim());
                 
+                // Uso de la función que mapea ruta virtual a ruta real
                 String rutaVirtual = sistemaArchivos.getCarpetaActual().getRutaCompleta();
-                rutaVirtual = rutaVirtual.replace("Z:", "").replace("Z:\\", "");
-                if (rutaVirtual.startsWith("\\")) {
-                    rutaVirtual = rutaVirtual.substring(1);
-                }
+                File carpetaFisicaBase = fileVirtualToReal(rutaVirtual);
+                File carpetaFisica = new File(carpetaFisicaBase, nombre.trim());
                 
-                File carpetaFisica = new File(rutaVirtual, nombre.trim());
-                carpetaFisica.mkdirs();
+                if (!carpetaFisica.exists()) {
+                    if (!carpetaFisica.mkdirs()) {
+                        mostrarError("Error", "No se pudo crear la carpeta física: " + carpetaFisica.getAbsolutePath());
+                        return;
+                    }
+                }
                 
                 actualizarVista();
                 mostrarExito("Carpeta creada exitosamente");
@@ -539,20 +536,21 @@ public class NavegadorArchivos extends JFrame {
         if (resultado == JFileChooser.APPROVE_OPTION) {
             File archivoSeleccionado = fileChooser.getSelectedFile();
             
-            String rutaVirtual = sistemaArchivos.getCarpetaActual().getRutaCompleta();
-            rutaVirtual = rutaVirtual.replace("Z:", "").replace("Z:\\", "");
-            if (rutaVirtual.startsWith("\\")) {
-                rutaVirtual = rutaVirtual.substring(1);
-            }
-            
-            File carpetaDestino = new File(rutaVirtual);
-            if (!carpetaDestino.exists()) {
-                carpetaDestino.mkdirs();
-            }
-            
-            File archivoDestino = new File(carpetaDestino, archivoSeleccionado.getName());
-            
             try {
+                // RUTA VIRTUAL actual (ej. "Z:/admin/Musica" o "Z:")
+                String rutaVirtual = sistemaArchivos.getCarpetaActual().getRutaCompleta();
+                // carpeta física destino mapeada desde la virtual
+                File carpetaDestino = fileVirtualToReal(rutaVirtual);
+                
+                if (!carpetaDestino.exists()) {
+                    if (!carpetaDestino.mkdirs()) {
+                        mostrarError("Error", "No se pudo crear la carpeta destino: " + carpetaDestino.getAbsolutePath());
+                        return;
+                    }
+                }
+                
+                File archivoDestino = new File(carpetaDestino, archivoSeleccionado.getName());
+                
                 Files.copy(
                     archivoSeleccionado.toPath(),
                     archivoDestino.toPath(),
@@ -564,14 +562,30 @@ public class NavegadorArchivos extends JFrame {
                 String extension = obtenerExtension(nombreArchivo);
                 String tipoArchivo = determinarTipo(extension);
                 
-                sistemaArchivos.crearArchivo(nombreArchivo, tipoArchivo, "");
+                // CREAR el archivo virtual pasando la RUTA VIRTUAL (no la física)
+                sistemaArchivos.crearArchivo(nombreArchivo, tipoArchivo, rutaVirtual);
                 
+                // obtener y actualizar metadatos del objeto virtual
                 ArchivoVirtual archivoVirtual = sistemaArchivos.obtenerArchivo(nombreArchivo);
                 if (archivoVirtual != null) {
                     archivoVirtual.setTamanio(tamanio);
                     
-                    String rutaFisicaCorrecta = archivoDestino.getAbsolutePath();
-                    archivoVirtual.setRutaCompleta(rutaFisicaCorrecta);
+                    // Guardamos la RUTA VIRTUAL en rutaCompleta (mejor que guardar la física)
+                    String sep = "";
+                    if (!rutaVirtual.endsWith("/") && !rutaVirtual.endsWith("\\") && !rutaVirtual.isEmpty()) {
+                        sep = File.separator;
+                    }
+                    archivoVirtual.setRutaCompleta(rutaVirtual + sep + nombreArchivo);
+                    
+                    // Si tu modelo tiene setRutaFisica, úsala (intento silencioso)
+                    try {
+                        archivoVirtual.getClass().getMethod("setRutaFisica", String.class)
+                                      .invoke(archivoVirtual, archivoDestino.getAbsolutePath());
+                    } catch (NoSuchMethodException nsme) {
+                        // no existe setRutaFisica -> ok, ya guardamos la virtual en rutaCompleta
+                    } catch (Exception ex) {
+                        // ignorar problemas reflección
+                    }
                 }
                 
                 actualizarVista();
@@ -647,13 +661,8 @@ public class NavegadorArchivos extends JFrame {
             try {
                 sistemaArchivos.eliminar(nombre);
                 
-                String rutaVirtual = archivo.getRutaCompleta();
-                rutaVirtual = rutaVirtual.replace("Z:", "").replace("Z:\\", "");
-                if (rutaVirtual.startsWith("\\")) {
-                    rutaVirtual = rutaVirtual.substring(1);
-                }
-                
-                File archivoFisico = new File(rutaVirtual);
+                // usamos la función de mapeo para obtener el archivo real
+                File archivoFisico = fileVirtualToReal(archivo.getRutaCompleta());
                 if (archivoFisico.exists()) {
                     if (archivoFisico.isDirectory()) {
                         eliminarDirectorioRecursivo(archivoFisico);
@@ -707,16 +716,22 @@ public class NavegadorArchivos extends JFrame {
             try {
                 sistemaArchivos.renombrar(nombreActual, nombreNuevo.trim());
                 
-                String rutaVirtual = archivo.getRutaCompleta();
-                rutaVirtual = rutaVirtual.replace("Z:", "").replace("Z:\\", "");
-                if (rutaVirtual.startsWith("\\")) {
-                    rutaVirtual = rutaVirtual.substring(1);
-                }
-                
-                File archivoFisicoAntiguo = new File(rutaVirtual);
+                File archivoFisicoAntiguo = fileVirtualToReal(archivo.getRutaCompleta());
                 if (archivoFisicoAntiguo.exists()) {
                     File archivoFisicoNuevo = new File(archivoFisicoAntiguo.getParent(), nombreNuevo.trim());
-                    archivoFisicoAntiguo.renameTo(archivoFisicoNuevo);
+                    if (!archivoFisicoAntiguo.renameTo(archivoFisicoNuevo)) {
+                        // intento por copiar y borrar si rename falla en ciertos FS
+                        try {
+                            if (archivoFisicoAntiguo.isDirectory()) {
+                                mostrarAdvertencia("Renombrado físico no soportado para directorios en este sistema.");
+                            } else {
+                                Files.copy(archivoFisicoAntiguo.toPath(), archivoFisicoNuevo.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                                archivoFisicoAntiguo.delete();
+                            }
+                        } catch (Exception ex) {
+                            mostrarError("Error", "No se pudo renombrar físicamente: " + ex.getMessage());
+                        }
+                    }
                 }
                 
                 actualizarVista();
@@ -760,13 +775,7 @@ public class NavegadorArchivos extends JFrame {
     }
     
     private void abrirVisorImagenes(ArchivoVirtual archivo) {
-        String rutaVirtual = archivo.getRutaCompleta();
-        rutaVirtual = rutaVirtual.replace("Z:", "").replace("Z:\\", "");
-        if (rutaVirtual.startsWith("\\")) {
-            rutaVirtual = rutaVirtual.substring(1);
-        }
-        
-        File archivoReal = new File(rutaVirtual);
+        File archivoReal = fileVirtualToReal(archivo.getRutaCompleta());
         
         if (!archivoReal.exists()) {
             mostrarError("Error", "La imagen no existe en el sistema de archivos real");
@@ -833,6 +842,46 @@ public class NavegadorArchivos extends JFrame {
             mensaje, 
             "Éxito", 
             JOptionPane.INFORMATION_MESSAGE);
+    }
+    
+    /**
+     * Mapea una ruta virtual (p.ej. "Z:/carpeta/sub") a una ruta física dentro de
+     * la carpeta <user.dir>/Z/.... 
+     * Lógica:
+     *  - Si empieza por "Z:" => es virtual: mapear a <user.dir>/Z/...
+     *  - Si es absoluta y NO empieza por "Z:" => devolverla tal cual (ruta real del sistema)
+     *  - Si es relativa => tratarla como subruta dentro de base (<user.dir>/Z/...)
+     */
+    private File fileVirtualToReal(String direccion) {
+        // carpeta base del "disco Z" dentro de user.dir
+        File base = new File(System.getProperty("user.dir"), "Z");
+        if (!base.exists()) base.mkdirs();
+
+        if (direccion == null || direccion.trim().isEmpty()) {
+            return base;
+        }
+
+        // Normalizar separadores y recortar
+        String dir = direccion.replace("\\", File.separator).replace("/", File.separator).trim();
+
+        // 1) Si comienza por "Z:" -> es VIRTUAL: quitar "Z:" y mapear dentro de base
+        if (dir.startsWith("Z:" + File.separator) || dir.equals("Z:") || dir.startsWith("Z:")) {
+            dir = dir.substring(2);
+            if (dir.startsWith(File.separator)) dir = dir.substring(1);
+            if (dir.isEmpty()) return base;
+            return new File(base, dir);
+        }
+
+        // 2) Si NO comienza por Z: y es absoluta en el sistema -> devolverla tal cual
+        File posible = new File(dir);
+        if (posible.isAbsolute()) {
+            return posible;
+        }
+
+        // 3) Si no es absoluta y no empieza por Z: -> se considera relativa dentro de base
+        if (dir.startsWith(File.separator)) dir = dir.substring(1);
+        if (dir.isEmpty()) return base;
+        return new File(base, dir);
     }
     
     private class RenderizadorArbol implements TreeCellRenderer {
