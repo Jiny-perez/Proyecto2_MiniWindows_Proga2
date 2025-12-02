@@ -6,10 +6,10 @@ package RedSocialINSTA.GUI;
 
 import Modelo.Usuario;
 import RedSocialINSTA.Logica.GestorINSTA;
+import RedSocialINSTA.Logica.GestorUsuariosLocal;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.HashMap;
 
 /**
  *
@@ -17,18 +17,20 @@ import java.util.HashMap;
  */
 public class VentanaLogin extends JFrame {
   
-    private static HashMap<String, Usuario> usuarios = new HashMap<>();
+    private GestorUsuariosLocal gestorUsuarios;
     
     private JPanel panelPrincipal;
     private JPanel panelLogin;
     private JPanel panelRegistro;
     private CardLayout cardLayout;
     
+    // Componentes del Login
     private JTextField txtUsernameLogin;
     private JPasswordField txtPasswordLogin;
     private JButton btnLogin;
     private JButton btnIrARegistro;
     
+    // Componentes del Registro
     private JTextField txtUsernameRegistro;
     private JTextField txtNombreCompleto;
     private JPasswordField txtPasswordRegistro;
@@ -36,6 +38,7 @@ public class VentanaLogin extends JFrame {
     private JButton btnRegistrar;
     private JButton btnIrALogin;
     
+    // Colores Instagram
     private static final Color INSTAGRAM_BLUE = new Color(0, 149, 246);
     private static final Color INSTAGRAM_BLUE_HOVER = new Color(24, 119, 242);
     private static final Color BACKGROUND_COLOR = new Color(250, 250, 250);
@@ -43,25 +46,31 @@ public class VentanaLogin extends JFrame {
     private static final Color TEXT_SECONDARY = new Color(142, 142, 142);
     private static final Color BORDER_COLOR = new Color(219, 219, 219);
     
+    // Gradiente Instagram
     private static final Color GRADIENT_START = new Color(193, 53, 132);
     private static final Color GRADIENT_END = new Color(245, 133, 41);
     
     public VentanaLogin() {
+        gestorUsuarios = new GestorUsuariosLocal();
         initComponents();
         configurarVentana();
     }
     
     private void initComponents() {
+        // Panel principal con CardLayout
         cardLayout = new CardLayout();
         panelPrincipal = new JPanel(cardLayout);
         panelPrincipal.setBackground(BACKGROUND_COLOR);
         
+        // Crear paneles
         panelLogin = crearPanelLogin();
         panelRegistro = crearPanelRegistro();
         
+        // Agregar al CardLayout
         panelPrincipal.add(panelLogin, "LOGIN");
         panelPrincipal.add(panelRegistro, "REGISTRO");
         
+        // Agregar al contenedor principal de la ventana
         getContentPane().add(panelPrincipal);
     }
     
@@ -74,6 +83,7 @@ public class VentanaLogin extends JFrame {
         gbc.insets = new Insets(10, 10, 10, 10);
         gbc.fill = GridBagConstraints.HORIZONTAL;
         
+        // Container principal
         JPanel container = new JPanel();
         container.setLayout(new BoxLayout(container, BoxLayout.Y_AXIS));
         container.setBackground(Color.WHITE);
@@ -83,33 +93,69 @@ public class VentanaLogin extends JFrame {
         ));
         container.setMaximumSize(new Dimension(350, 500));
         
-        
         JLabel lblLogo = new JLabel();
         try {
-            ImageIcon logoIcon = IconManager.getLogoScaled(175, 51);
+            ImageIcon logoIcon = IconManager.getLogoScaled(200, 58);
             lblLogo.setIcon(logoIcon);
         } catch (Exception e) {
-            lblLogo.setText("Instagram");
-            lblLogo.setFont(new Font("Brush Script MT", Font.ITALIC, 36));
-            lblLogo.setForeground(new Color(193, 53, 132));
+            ImageIcon logoIcon = IconDrawer.createInstagramLogo(200, 58);
+            lblLogo.setIcon(logoIcon);
         }
         lblLogo.setAlignmentX(Component.CENTER_ALIGNMENT);
-        lblLogo.setBorder(BorderFactory.createEmptyBorder(20, 0, 20, 0));
+        lblLogo.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
         container.add(lblLogo);
         container.add(Box.createVerticalStrut(30));
         
+        // Campo de Username
         txtUsernameLogin = crearCampoTexto("Username");
         txtUsernameLogin.setMaximumSize(new Dimension(270, 40));
         txtUsernameLogin.setAlignmentX(Component.CENTER_ALIGNMENT);
         container.add(txtUsernameLogin);
         container.add(Box.createVerticalStrut(10));
         
+        // Panel para Password con botón mostrar/ocultar
+        JPanel panelPassword = new JPanel(new BorderLayout(0, 0));
+        panelPassword.setMaximumSize(new Dimension(270, 40));
+        panelPassword.setAlignmentX(Component.CENTER_ALIGNMENT);
+        panelPassword.setBackground(Color.WHITE);
+        
         txtPasswordLogin = crearCampoPassword("Contraseña");
-        txtPasswordLogin.setMaximumSize(new Dimension(270, 40));
-        txtPasswordLogin.setAlignmentX(Component.CENTER_ALIGNMENT);
-        container.add(txtPasswordLogin);
+        txtPasswordLogin.setPreferredSize(new Dimension(230, 40));
+        
+        // Botón para mostrar/ocultar contraseña
+        JButton btnMostrarPassword = new JButton("👁");
+        btnMostrarPassword.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 14));
+        btnMostrarPassword.setPreferredSize(new Dimension(40, 40));
+        btnMostrarPassword.setBackground(Color.WHITE);
+        btnMostrarPassword.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createMatteBorder(1, 0, 1, 1, BORDER_COLOR),
+            BorderFactory.createEmptyBorder(0, 0, 0, 0)
+        ));
+        btnMostrarPassword.setFocusPainted(false);
+        btnMostrarPassword.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        
+        final boolean[] passwordVisible = {false};
+        btnMostrarPassword.addActionListener(e -> {
+            passwordVisible[0] = !passwordVisible[0];
+            if (passwordVisible[0]) {
+                txtPasswordLogin.setEchoChar((char) 0);
+                btnMostrarPassword.setText("🙈");
+            } else {
+                String currentText = String.valueOf(txtPasswordLogin.getPassword());
+                if (!currentText.equals("Contraseña") && !currentText.isEmpty()) {
+                    txtPasswordLogin.setEchoChar('•');
+                }
+                btnMostrarPassword.setText("👁");
+            }
+        });
+        
+        panelPassword.add(txtPasswordLogin, BorderLayout.CENTER);
+        panelPassword.add(btnMostrarPassword, BorderLayout.EAST);
+        
+        container.add(panelPassword);
         container.add(Box.createVerticalStrut(20));
         
+        // Botón de Login
         btnLogin = crearBotonPrincipal("Iniciar Sesión");
         btnLogin.addActionListener(e -> intentarLogin());
         btnLogin.setMaximumSize(new Dimension(270, 40));
@@ -117,12 +163,14 @@ public class VentanaLogin extends JFrame {
         container.add(btnLogin);
         container.add(Box.createVerticalStrut(30));
         
+        // Separador
         JSeparator separador = new JSeparator();
         separador.setMaximumSize(new Dimension(270, 1));
         separador.setAlignmentX(Component.CENTER_ALIGNMENT);
         container.add(separador);
         container.add(Box.createVerticalStrut(20));
         
+        // Texto "¿No tienes cuenta?"
         JLabel lblNoTienesCuenta = new JLabel("¿No tienes una cuenta?");
         lblNoTienesCuenta.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         lblNoTienesCuenta.setForeground(TEXT_SECONDARY);
@@ -130,6 +178,7 @@ public class VentanaLogin extends JFrame {
         container.add(lblNoTienesCuenta);
         container.add(Box.createVerticalStrut(10));
         
+        // Botón ir a Registro
         btnIrARegistro = crearBotonSecundario("Regístrate");
         btnIrARegistro.addActionListener(e -> mostrarRegistro());
         btnIrARegistro.setMaximumSize(new Dimension(270, 40));
@@ -140,6 +189,7 @@ public class VentanaLogin extends JFrame {
         gbc.gridy = 0;
         panel.add(container, gbc);
         
+        // Enter para login
         txtPasswordLogin.addActionListener(e -> btnLogin.doClick());
         
         return panel;
@@ -154,6 +204,7 @@ public class VentanaLogin extends JFrame {
         gbc.insets = new Insets(10, 10, 10, 10);
         gbc.fill = GridBagConstraints.HORIZONTAL;
         
+        // Container principal
         JPanel container = new JPanel();
         container.setLayout(new BoxLayout(container, BoxLayout.Y_AXIS));
         container.setBackground(Color.WHITE);
@@ -163,21 +214,20 @@ public class VentanaLogin extends JFrame {
         ));
         container.setMaximumSize(new Dimension(350, 600));
         
-        
         JLabel lblLogo = new JLabel();
         try {
-            ImageIcon logoIcon = IconManager.getLogoScaled(150, 44);
+            ImageIcon logoIcon = IconManager.getLogoScaled(175, 51);
             lblLogo.setIcon(logoIcon);
         } catch (Exception e) {
-            lblLogo.setText("Instagram");
-            lblLogo.setFont(new Font("Brush Script MT", Font.ITALIC, 32));
-            lblLogo.setForeground(new Color(193, 53, 132));
+            ImageIcon logoIcon = IconDrawer.createInstagramLogo(175, 51);
+            lblLogo.setIcon(logoIcon);
         }
         lblLogo.setAlignmentX(Component.CENTER_ALIGNMENT);
         lblLogo.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
         container.add(lblLogo);
         container.add(Box.createVerticalStrut(10));
         
+        // Título
         JLabel lblTitulo = new JLabel("Regístrate para ver fotos de tus amigos");
         lblTitulo.setFont(new Font("Segoe UI", Font.BOLD, 16));
         lblTitulo.setForeground(TEXT_SECONDARY);
@@ -185,30 +235,105 @@ public class VentanaLogin extends JFrame {
         container.add(lblTitulo);
         container.add(Box.createVerticalStrut(20));
         
+        // Campo de Username
         txtUsernameRegistro = crearCampoTexto("Username");
         txtUsernameRegistro.setMaximumSize(new Dimension(270, 40));
         txtUsernameRegistro.setAlignmentX(Component.CENTER_ALIGNMENT);
         container.add(txtUsernameRegistro);
         container.add(Box.createVerticalStrut(10));
         
+        // Campo de Nombre Completo
         txtNombreCompleto = crearCampoTexto("Nombre completo");
         txtNombreCompleto.setMaximumSize(new Dimension(270, 40));
         txtNombreCompleto.setAlignmentX(Component.CENTER_ALIGNMENT);
         container.add(txtNombreCompleto);
         container.add(Box.createVerticalStrut(10));
         
+        // Panel para Password con botón mostrar/ocultar
+        JPanel panelPasswordReg = new JPanel(new BorderLayout(0, 0));
+        panelPasswordReg.setMaximumSize(new Dimension(270, 40));
+        panelPasswordReg.setAlignmentX(Component.CENTER_ALIGNMENT);
+        panelPasswordReg.setBackground(Color.WHITE);
+        
         txtPasswordRegistro = crearCampoPassword("Contraseña");
-        txtPasswordRegistro.setMaximumSize(new Dimension(270, 40));
-        txtPasswordRegistro.setAlignmentX(Component.CENTER_ALIGNMENT);
-        container.add(txtPasswordRegistro);
+        txtPasswordRegistro.setPreferredSize(new Dimension(230, 40));
+        
+        // Botón para mostrar/ocultar contraseña
+        JButton btnMostrarPasswordReg = new JButton("👁");
+        btnMostrarPasswordReg.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 14));
+        btnMostrarPasswordReg.setPreferredSize(new Dimension(40, 40));
+        btnMostrarPasswordReg.setBackground(Color.WHITE);
+        btnMostrarPasswordReg.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createMatteBorder(1, 0, 1, 1, BORDER_COLOR),
+            BorderFactory.createEmptyBorder(0, 0, 0, 0)
+        ));
+        btnMostrarPasswordReg.setFocusPainted(false);
+        btnMostrarPasswordReg.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        
+        final boolean[] passwordVisibleReg = {false};
+        btnMostrarPasswordReg.addActionListener(e -> {
+            passwordVisibleReg[0] = !passwordVisibleReg[0];
+            if (passwordVisibleReg[0]) {
+                txtPasswordRegistro.setEchoChar((char) 0);
+                btnMostrarPasswordReg.setText("🙈");
+            } else {
+                String currentText = String.valueOf(txtPasswordRegistro.getPassword());
+                if (!currentText.equals("Contraseña") && !currentText.isEmpty()) {
+                    txtPasswordRegistro.setEchoChar('•');
+                }
+                btnMostrarPasswordReg.setText("👁");
+            }
+        });
+        
+        panelPasswordReg.add(txtPasswordRegistro, BorderLayout.CENTER);
+        panelPasswordReg.add(btnMostrarPasswordReg, BorderLayout.EAST);
+        
+        container.add(panelPasswordReg);
         container.add(Box.createVerticalStrut(10));
         
+        // Panel para Confirmar Password con botón mostrar/ocultar
+        JPanel panelConfirmarPassword = new JPanel(new BorderLayout(0, 0));
+        panelConfirmarPassword.setMaximumSize(new Dimension(270, 40));
+        panelConfirmarPassword.setAlignmentX(Component.CENTER_ALIGNMENT);
+        panelConfirmarPassword.setBackground(Color.WHITE);
+        
         txtConfirmarPassword = crearCampoPassword("Confirmar contraseña");
-        txtConfirmarPassword.setMaximumSize(new Dimension(270, 40));
-        txtConfirmarPassword.setAlignmentX(Component.CENTER_ALIGNMENT);
-        container.add(txtConfirmarPassword);
+        txtConfirmarPassword.setPreferredSize(new Dimension(230, 40));
+        
+        // Botón para mostrar/ocultar contraseña de confirmación
+        JButton btnMostrarConfirmar = new JButton("👁");
+        btnMostrarConfirmar.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 14));
+        btnMostrarConfirmar.setPreferredSize(new Dimension(40, 40));
+        btnMostrarConfirmar.setBackground(Color.WHITE);
+        btnMostrarConfirmar.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createMatteBorder(1, 0, 1, 1, BORDER_COLOR),
+            BorderFactory.createEmptyBorder(0, 0, 0, 0)
+        ));
+        btnMostrarConfirmar.setFocusPainted(false);
+        btnMostrarConfirmar.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        
+        final boolean[] confirmarVisible = {false};
+        btnMostrarConfirmar.addActionListener(e -> {
+            confirmarVisible[0] = !confirmarVisible[0];
+            if (confirmarVisible[0]) {
+                txtConfirmarPassword.setEchoChar((char) 0);
+                btnMostrarConfirmar.setText("🙈");
+            } else {
+                String currentText = String.valueOf(txtConfirmarPassword.getPassword());
+                if (!currentText.equals("Confirmar contraseña") && !currentText.isEmpty()) {
+                    txtConfirmarPassword.setEchoChar('•');
+                }
+                btnMostrarConfirmar.setText("👁");
+            }
+        });
+        
+        panelConfirmarPassword.add(txtConfirmarPassword, BorderLayout.CENTER);
+        panelConfirmarPassword.add(btnMostrarConfirmar, BorderLayout.EAST);
+        
+        container.add(panelConfirmarPassword);
         container.add(Box.createVerticalStrut(20));
         
+        // Botón de Registro
         btnRegistrar = crearBotonPrincipal("Registrarse");
         btnRegistrar.addActionListener(e -> intentarRegistro());
         btnRegistrar.setMaximumSize(new Dimension(270, 40));
@@ -216,12 +341,14 @@ public class VentanaLogin extends JFrame {
         container.add(btnRegistrar);
         container.add(Box.createVerticalStrut(20));
         
+        // Separador
         JSeparator separador = new JSeparator();
         separador.setMaximumSize(new Dimension(270, 1));
         separador.setAlignmentX(Component.CENTER_ALIGNMENT);
         container.add(separador);
         container.add(Box.createVerticalStrut(15));
         
+        // Texto "¿Ya tienes cuenta?"
         JLabel lblYaTienesCuenta = new JLabel("¿Ya tienes una cuenta?");
         lblYaTienesCuenta.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         lblYaTienesCuenta.setForeground(TEXT_SECONDARY);
@@ -229,6 +356,7 @@ public class VentanaLogin extends JFrame {
         container.add(lblYaTienesCuenta);
         container.add(Box.createVerticalStrut(10));
         
+        // Botón ir a Login
         btnIrALogin = crearBotonSecundario("Inicia sesión");
         btnIrALogin.addActionListener(e -> mostrarLogin());
         btnIrALogin.setMaximumSize(new Dimension(270, 40));
@@ -250,6 +378,7 @@ public class VentanaLogin extends JFrame {
             BorderFactory.createEmptyBorder(8, 12, 8, 12)
         ));
         
+        // Placeholder
         campo.setText(placeholder);
         campo.setForeground(TEXT_SECONDARY);
         
@@ -394,14 +523,9 @@ public class VentanaLogin extends JFrame {
             return;
         }
         
-        Usuario usuario = usuarios.get(username);
-        
-        if (usuario != null && usuario.getPassword().equals(password)) {
-            if (usuario.isActivo()) {
-                abrirInstagram(usuario);
-            } else {
-                mostrarError("Esta cuenta está desactivada");
-            }
+        if (gestorUsuarios.validarLogin(username, password)) {
+            Usuario usuario = gestorUsuarios.obtenerUsuario(username);
+            abrirInstagram(usuario);
         } else {
             mostrarError("Username o contraseña incorrectos");
         }
@@ -438,18 +562,18 @@ public class VentanaLogin extends JFrame {
             return;
         }
         
-        if (usuarios.containsKey(username)) {
+        if (gestorUsuarios.existeUsuario(username)) {
             mostrarError("Este username ya está en uso");
             return;
         }
         
-        Usuario nuevoUsuario = new Usuario(username, nombreCompleto, password, true);
-        
-        usuarios.put(username, nuevoUsuario);
-        
-        mostrarExito("¡Cuenta creada exitosamente!");
-        
-        abrirInstagram(nuevoUsuario);
+        if (gestorUsuarios.registrarUsuario(username, nombreCompleto, password)) {
+            mostrarExito("¡Cuenta creada exitosamente!");
+            Usuario usuario = gestorUsuarios.obtenerUsuario(username);
+            abrirInstagram(usuario);
+        } else {
+            mostrarError("Error al crear la cuenta");
+        }
     }
     
     private void abrirInstagram(Usuario usuario) {
@@ -457,6 +581,7 @@ public class VentanaLogin extends JFrame {
         VentanaINSTA ventanaINSTA = new VentanaINSTA(usuario, gestorINSTA);
         ventanaINSTA.setVisible(true);
         
+        // Cerrar ventana de login
         dispose();
     }
     
@@ -488,6 +613,7 @@ public class VentanaLogin extends JFrame {
     }
     
     public static void main(String[] args) {
+        // Configurar look and feel
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
         } catch (Exception e) {

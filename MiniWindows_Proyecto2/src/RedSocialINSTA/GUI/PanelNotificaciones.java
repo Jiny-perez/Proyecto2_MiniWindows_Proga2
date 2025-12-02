@@ -40,6 +40,7 @@ public class PanelNotificaciones extends JPanel {
         setLayout(new BorderLayout());
         setBackground(BACKGROUND_COLOR);
         
+        // Header
         JPanel header = new JPanel(new BorderLayout());
         header.setBackground(CARD_COLOR);
         header.setBorder(new CompoundBorder(
@@ -55,6 +56,7 @@ public class PanelNotificaciones extends JPanel {
         
         add(header, BorderLayout.NORTH);
         
+        // Panel de notificaciones
         panelNotificaciones = new JPanel();
         panelNotificaciones.setLayout(new BoxLayout(panelNotificaciones, BoxLayout.Y_AXIS));
         panelNotificaciones.setBackground(BACKGROUND_COLOR);
@@ -70,6 +72,7 @@ public class PanelNotificaciones extends JPanel {
     public void actualizarContenido() {
         panelNotificaciones.removeAll();
         
+        // Buscar publicaciones donde mencionan al usuario
         String usernameActual = gestorINSTA.getUsernameActual();
         ArrayList<Publicacion> menciones = buscarMenciones(usernameActual);
         
@@ -90,8 +93,10 @@ public class PanelNotificaciones extends JPanel {
         ArrayList<Publicacion> menciones = new ArrayList<>();
         String busqueda = "@" + username;
         
+        // Buscar en todas las publicaciones
         ArrayList<Publicacion> todasPublicaciones = gestorINSTA.buscarPublicaciones(busqueda);
         
+        // Filtrar solo las que no son del usuario actual
         for (Publicacion pub : todasPublicaciones) {
             if (!pub.getUsername().equals(username)) {
                 menciones.add(pub);
@@ -111,9 +116,10 @@ public class PanelNotificaciones extends JPanel {
         notificacion.setMaximumSize(new Dimension(600, 120));
         notificacion.setAlignmentX(Component.LEFT_ALIGNMENT);
         
-        JLabel lblIcono = new JLabel("@");
-        lblIcono.setFont(new Font("Segoe UI", Font.BOLD, 24));
-        lblIcono.setForeground(TEXT_SECONDARY);
+        JLabel lblIcono = new JLabel();
+        ImageIcon avatarIcon = IconDrawer.createDefaultAvatar(40);
+        lblIcono.setIcon(avatarIcon);
+        lblIcono.setPreferredSize(new Dimension(40, 40));
         
         JPanel panelContenido = new JPanel();
         panelContenido.setLayout(new BoxLayout(panelContenido, BoxLayout.Y_AXIS));

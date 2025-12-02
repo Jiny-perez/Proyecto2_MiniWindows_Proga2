@@ -45,6 +45,7 @@ public class DialogCrearPublicacion extends JDialog {
         setLayout(new BorderLayout(0, 0));
         getContentPane().setBackground(BACKGROUND_COLOR);
         
+        // Header
         JPanel header = new JPanel(new BorderLayout());
         header.setBackground(BACKGROUND_COLOR);
         header.setBorder(new CompoundBorder(
@@ -71,11 +72,13 @@ public class DialogCrearPublicacion extends JDialog {
         
         add(header, BorderLayout.NORTH);
         
+        // Centro - contenido y preview de imagen
         JPanel centro = new JPanel();
         centro.setLayout(new BoxLayout(centro, BoxLayout.Y_AXIS));
         centro.setBackground(BACKGROUND_COLOR);
         centro.setBorder(BorderFactory.createEmptyBorder(16, 16, 16, 16));
         
+        // Área de texto para el contenido
         JLabel lblContenido = new JLabel("Escribe algo...");
         lblContenido.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         lblContenido.setForeground(TEXT_SECONDARY);
@@ -100,12 +103,13 @@ public class DialogCrearPublicacion extends JDialog {
         centro.add(scrollContenido);
         centro.add(Box.createVerticalStrut(16));
         
+        // Sección de imagen
         JPanel panelImagen = new JPanel();
         panelImagen.setLayout(new BoxLayout(panelImagen, BoxLayout.Y_AXIS));
         panelImagen.setBackground(BACKGROUND_COLOR);
         panelImagen.setAlignmentX(Component.LEFT_ALIGNMENT);
         
-        btnSeleccionarImagen = new JButton("📷 Agregar imagen");
+        btnSeleccionarImagen = new JButton("Agregar imagen");
         btnSeleccionarImagen.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         btnSeleccionarImagen.setForeground(ACCENT_COLOR);
         btnSeleccionarImagen.setBackground(BACKGROUND_COLOR);
@@ -117,8 +121,14 @@ public class DialogCrearPublicacion extends JDialog {
         btnSeleccionarImagen.setCursor(new Cursor(Cursor.HAND_CURSOR));
         btnSeleccionarImagen.setAlignmentX(Component.LEFT_ALIGNMENT);
         
+        ImageIcon iconCamera = IconDrawer.createPlusIcon(20);
+        btnSeleccionarImagen.setIcon(iconCamera);
+        btnSeleccionarImagen.setHorizontalTextPosition(SwingConstants.RIGHT);
+        btnSeleccionarImagen.setIconTextGap(8);
+        
         btnSeleccionarImagen.addActionListener(e -> seleccionarImagen());
         
+        // Panel de preview de imagen
         lblImagenPreview = new JLabel();
         lblImagenPreview.setBorder(new LineBorder(BORDER_COLOR, 1));
         lblImagenPreview.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -146,6 +156,7 @@ public class DialogCrearPublicacion extends JDialog {
         
         add(centro, BorderLayout.CENTER);
         
+        // Footer con botones
         JPanel footer = new JPanel(new FlowLayout(FlowLayout.RIGHT, 12, 12));
         footer.setBackground(BACKGROUND_COLOR);
         footer.setBorder(new MatteBorder(1, 0, 0, 0, BORDER_COLOR));
@@ -196,6 +207,7 @@ public class DialogCrearPublicacion extends JDialog {
         try {
             ImageIcon iconoOriginal = new ImageIcon(imagenSeleccionada.getAbsolutePath());
             
+            // Escalar imagen para preview (máximo 400x300)
             int anchoMax = 400;
             int altoMax = 300;
             
@@ -216,7 +228,7 @@ public class DialogCrearPublicacion extends JDialog {
             lblImagenPreview.setIcon(new ImageIcon(imagenEscalada));
             lblImagenPreview.setVisible(true);
             btnQuitarImagen.setVisible(true);
-            btnSeleccionarImagen.setText("📷 Cambiar imagen");
+            btnSeleccionarImagen.setText("Cambiar imagen");
             
             revalidate();
             repaint();
@@ -236,7 +248,7 @@ public class DialogCrearPublicacion extends JDialog {
         lblImagenPreview.setIcon(null);
         lblImagenPreview.setVisible(false);
         btnQuitarImagen.setVisible(false);
-        btnSeleccionarImagen.setText("📷 Agregar imagen");
+        btnSeleccionarImagen.setText("Agregar imagen");
         
         revalidate();
         repaint();
@@ -255,6 +267,7 @@ public class DialogCrearPublicacion extends JDialog {
             return;
         }
         
+        // Crear la publicación
         if (imagenSeleccionada != null) {
             gestorINSTA.crearPublicacion(contenido, imagenSeleccionada.getAbsolutePath());
         } else {

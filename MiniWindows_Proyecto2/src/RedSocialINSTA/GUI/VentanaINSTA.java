@@ -20,16 +20,19 @@ public class VentanaINSTA extends JFrame {
     private GestorINSTA gestorINSTA;
     private Usuario usuarioActual;
     
+    // Componentes principales
     private JPanel panelLateral;
     private JPanel panelContenido;
     private CardLayout cardLayout;
     
+    // Paneles de contenido
     private PanelTimeline panelTimeline;
     private PanelExplorar panelExplorar;
     private PanelPerfil panelPerfil;
     private PanelMensajes panelMensajes;
     private PanelNotificaciones panelNotificaciones;
     
+    // Colores del tema Instagram
     private static final Color BACKGROUND_COLOR = new Color(250, 250, 250);
     private static final Color SIDEBAR_COLOR = Color.WHITE;
     private static final Color BORDER_COLOR = new Color(219, 219, 219);
@@ -50,18 +53,22 @@ public class VentanaINSTA extends JFrame {
         setLayout(new BorderLayout());
         getContentPane().setBackground(BACKGROUND_COLOR);
         
+        // Panel lateral (sidebar)
         crearPanelLateral();
         
+        // Panel de contenido principal con CardLayout
         cardLayout = new CardLayout();
         panelContenido = new JPanel(cardLayout);
         panelContenido.setBackground(BACKGROUND_COLOR);
         
+        // Crear los diferentes paneles
         panelTimeline = new PanelTimeline(gestorINSTA, this);
         panelExplorar = new PanelExplorar(gestorINSTA, this);
         panelPerfil = new PanelPerfil(gestorINSTA, usuarioActual.getUsername(), this);
         panelMensajes = new PanelMensajes(gestorINSTA);
         panelNotificaciones = new PanelNotificaciones(gestorINSTA, this);
         
+        // Agregar paneles al CardLayout
         panelContenido.add(panelTimeline, "TIMELINE");
         panelContenido.add(panelExplorar, "EXPLORAR");
         panelContenido.add(panelPerfil, "PERFIL");
@@ -71,6 +78,7 @@ public class VentanaINSTA extends JFrame {
         add(panelLateral, BorderLayout.WEST);
         add(panelContenido, BorderLayout.CENTER);
         
+        // Mostrar timeline por defecto
         mostrarTimeline();
     }
     
@@ -81,46 +89,86 @@ public class VentanaINSTA extends JFrame {
         panelLateral.setBorder(new MatteBorder(0, 0, 0, 1, BORDER_COLOR));
         panelLateral.setPreferredSize(new Dimension(245, 600));
         
-        JLabel lblLogo = new JLabel("Instagram");
-        lblLogo.setFont(new Font("Brush Script MT", Font.ITALIC, 32));
-        lblLogo.setForeground(TEXT_PRIMARY);
+        JLabel lblLogo = new JLabel();
+        try {
+            ImageIcon logoIcon = IconManager.getLogoScaled(140, 41);
+            lblLogo.setIcon(logoIcon);
+        } catch (Exception e) {
+            ImageIcon logoIcon = IconDrawer.createInstagramLogo(140, 41);
+            lblLogo.setIcon(logoIcon);
+        }
         lblLogo.setAlignmentX(Component.LEFT_ALIGNMENT);
         lblLogo.setBorder(BorderFactory.createEmptyBorder(30, 20, 30, 20));
         panelLateral.add(lblLogo);
         
-        panelLateral.add(crearBotonNavegacion("🏠 Inicio", e -> mostrarTimeline()));
+        // Botones de navegación con iconos
+        panelLateral.add(crearBotonNavegacion("Inicio", IconManager.ICON_HOME, e -> mostrarTimeline()));
         panelLateral.add(Box.createVerticalStrut(5));
         
-        panelLateral.add(crearBotonNavegacion("🔍 Explorar", e -> mostrarExplorar()));
+        panelLateral.add(crearBotonNavegacion("Explorar", IconManager.ICON_SEARCH, e -> mostrarExplorar()));
         panelLateral.add(Box.createVerticalStrut(5));
         
-        panelLateral.add(crearBotonNavegacion("💬 Mensajes", e -> mostrarMensajes()));
+        panelLateral.add(crearBotonNavegacion("Mensajes", IconManager.ICON_MESSAGES, e -> mostrarMensajes()));
         panelLateral.add(Box.createVerticalStrut(5));
         
-        panelLateral.add(crearBotonNavegacion("🔔 Notificaciones", e -> mostrarNotificaciones()));
+        panelLateral.add(crearBotonNavegacion("Notificaciones", IconManager.ICON_NOTIFICATIONS, e -> mostrarNotificaciones()));
         panelLateral.add(Box.createVerticalStrut(5));
         
-        panelLateral.add(crearBotonNavegacion("➕ Crear", e -> crearPublicacion()));
+        panelLateral.add(crearBotonNavegacion("Crear", IconManager.ICON_CREATE, e -> crearPublicacion()));
         panelLateral.add(Box.createVerticalStrut(5));
         
-        panelLateral.add(crearBotonNavegacion("👤 Perfil", e -> mostrarPerfil()));
+        panelLateral.add(crearBotonNavegacion("Perfil", IconManager.ICON_PROFILE, e -> mostrarPerfil()));
         panelLateral.add(Box.createVerticalStrut(5));
         
+        // Espaciador
         panelLateral.add(Box.createVerticalGlue());
         
-        panelLateral.add(crearBotonNavegacion("🚪 Cerrar Sesión", e -> cerrarSesion()));
+        // Botón de cerrar sesión
+        panelLateral.add(crearBotonNavegacion("Cerrar Sesión", IconManager.ICON_LOGOUT, e -> cerrarSesion()));
         panelLateral.add(Box.createVerticalStrut(20));
     }
     
-    private JButton crearBotonNavegacion(String texto, ActionListener action) {
+    private JButton crearBotonNavegacion(String texto, String iconoNombre, ActionListener action) {
         JButton btn = new JButton(texto);
+        
+        ImageIcon icono = null;
+        switch(iconoNombre) {
+            case IconManager.ICON_HOME:
+                icono = IconDrawer.createHomeIcon(24);
+                break;
+            case IconManager.ICON_SEARCH:
+                icono = IconDrawer.createSearchIcon(24);
+                break;
+            case IconManager.ICON_MESSAGES:
+                icono = IconDrawer.createMessageIcon(24);
+                break;
+            case IconManager.ICON_NOTIFICATIONS:
+                icono = IconDrawer.createNotificationIcon(24);
+                break;
+            case IconManager.ICON_CREATE:
+                icono = IconDrawer.createPlusIcon(24);
+                break;
+            case IconManager.ICON_PROFILE:
+                icono = IconDrawer.createProfileIcon(24);
+                break;
+            case IconManager.ICON_LOGOUT:
+                icono = IconDrawer.createLogoutIcon(24);
+                break;
+        }
+        
+        if (icono != null) {
+            btn.setIcon(icono);
+            btn.setHorizontalTextPosition(SwingConstants.RIGHT);
+            btn.setIconTextGap(15);
+        }
+        
         btn.setAlignmentX(Component.LEFT_ALIGNMENT);
         btn.setMaximumSize(new Dimension(225, 50));
         btn.setPreferredSize(new Dimension(225, 50));
         btn.setFont(new Font("Segoe UI", Font.PLAIN, 16));
         btn.setForeground(TEXT_PRIMARY);
         btn.setBackground(SIDEBAR_COLOR);
-        btn.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
+        btn.setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 20));
         btn.setHorizontalAlignment(SwingConstants.LEFT);
         btn.setFocusPainted(false);
         btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
@@ -187,6 +235,7 @@ public class VentanaINSTA extends JFrame {
         if (opcion == JOptionPane.YES_OPTION) {
             gestorINSTA.guardarDatos();
             dispose();
+            // Aquí deberías regresar a la ventana de login
         }
     }
     
@@ -212,5 +261,4 @@ public class VentanaINSTA extends JFrame {
     public GestorINSTA getGestorINSTA() {
         return gestorINSTA;
     }
-
 }

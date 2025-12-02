@@ -1,0 +1,74 @@
+/*
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
+ */
+package RedSocialINSTA.Logica;
+
+import Modelo.Usuario;
+import java.io.*;
+import java.util.HashMap;
+
+/**
+ *
+ * @author najma
+ */
+public class GestorUsuariosLocal {
+    
+    private static final String ARCHIVO_USUARIOS = "usuarios_insta.dat";
+    private HashMap<String, Usuario> usuarios;
+    
+    public GestorUsuariosLocal() {
+        cargarUsuarios();
+    }
+    
+    private void cargarUsuarios() {
+        File archivo = new File(ARCHIVO_USUARIOS);
+        
+        if (archivo.exists()) {
+            try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(archivo))) {
+                usuarios = (HashMap<String, Usuario>) ois.readObject();
+            } catch (Exception e) {
+                System.err.println("Error al cargar usuarios: " + e.getMessage());
+                usuarios = new HashMap<>();
+            }
+        } else {
+            usuarios = new HashMap<>();
+        }
+    }
+    
+    private void guardarUsuarios() {
+        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(ARCHIVO_USUARIOS))) {
+            oos.writeObject(usuarios);
+        } catch (Exception e) {
+            System.err.println("Error al guardar usuarios: " + e.getMessage());
+        }
+    }
+    
+    public boolean existeUsuario(String username) {
+        return usuarios.containsKey(username);
+    }
+    
+    public Usuario obtenerUsuario(String username) {
+        return usuarios.get(username);
+    }
+    
+    public boolean registrarUsuario(String username, String nombreCompleto, String password) {
+        if (existeUsuario(username)) {
+            return false;
+        }
+        
+        Usuario nuevoUsuario = new Usuario(username, nombreCompleto, password, true);
+        usuarios.put(username, nuevoUsuario);
+        guardarUsuarios();
+        return true;
+    }
+    
+    public boolean validarLogin(String username, String password) {
+        Usuario usuario = usuarios.get(username);
+        return usuario != null && usuario.getPassword().equals(password) && usuario.isActivo();
+    }
+    
+    public int getCantidadUsuarios() {
+        return usuarios.size();
+    }
+}

@@ -85,23 +85,10 @@ public class PanelPerfil extends JPanel {
         panelSuperior.setBackground(CARD_COLOR);
         panelSuperior.setMaximumSize(new Dimension(800, 160));
         
-        JPanel fotoPerfil = new JPanel() {
-            @Override
-            protected void paintComponent(Graphics g) {
-                super.paintComponent(g);
-                Graphics2D g2d = (Graphics2D) g;
-                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                
-                g2d.setColor(new Color(200, 200, 200));
-                g2d.fillOval(0, 0, 150, 150);
-                
-                g2d.setColor(Color.WHITE);
-                g2d.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 70));
-                g2d.drawString("👤", 40, 105);
-            }
-        };
+        JLabel fotoPerfil = new JLabel();
+        ImageIcon avatarIcon = IconDrawer.createDefaultAvatar(150);
+        fotoPerfil.setIcon(avatarIcon);
         fotoPerfil.setPreferredSize(new Dimension(150, 150));
-        fotoPerfil.setBackground(CARD_COLOR);
         
         JPanel panelInfo = new JPanel();
         panelInfo.setLayout(new BoxLayout(panelInfo, BoxLayout.Y_AXIS));

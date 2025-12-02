@@ -84,7 +84,7 @@ public class PanelExplorar extends JPanel {
         cmbTipoBusqueda.setBackground(CARD_COLOR);
         cmbTipoBusqueda.setPreferredSize(new Dimension(120, 40));
         
-        JButton btnBuscar = new JButton("🔍 Buscar");
+        JButton btnBuscar = new JButton("Buscar");
         btnBuscar.setFont(new Font("Segoe UI", Font.BOLD, 14));
         btnBuscar.setForeground(Color.WHITE);
         btnBuscar.setBackground(ACCENT_COLOR);
