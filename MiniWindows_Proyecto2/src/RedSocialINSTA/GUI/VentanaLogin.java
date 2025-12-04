@@ -31,6 +31,8 @@ public class VentanaLogin extends JFrame {
     
     private JTextField txtUsernameRegistro;
     private JTextField txtNombreCompleto;
+    private JComboBox<String> cmbGenero;
+    private JSpinner spnEdad;
     private JPasswordField txtPasswordRegistro;
     private JPasswordField txtConfirmarPassword;
     private JButton btnRegistrar;
@@ -194,7 +196,7 @@ public class VentanaLogin extends JFrame {
             BorderFactory.createLineBorder(BORDER_COLOR, 1),
             BorderFactory.createEmptyBorder(40, 40, 40, 40)
         ));
-        container.setMaximumSize(new Dimension(350, 600));
+        container.setMaximumSize(new Dimension(350, 700));
         
         JLabel lblLogo = new JLabel();
         try {
@@ -226,6 +228,55 @@ public class VentanaLogin extends JFrame {
         txtNombreCompleto.setMaximumSize(new Dimension(270, 40));
         txtNombreCompleto.setAlignmentX(Component.CENTER_ALIGNMENT);
         container.add(txtNombreCompleto);
+        container.add(Box.createVerticalStrut(10));
+        
+        cmbGenero = new JComboBox<>(new String[]{"Género", "Masculino", "Femenino"});
+        cmbGenero.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        cmbGenero.setMaximumSize(new Dimension(270, 40));
+        cmbGenero.setAlignmentX(Component.CENTER_ALIGNMENT);
+        cmbGenero.setBackground(Color.WHITE);
+        cmbGenero.setForeground(TEXT_SECONDARY);
+        cmbGenero.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(BORDER_COLOR, 1),
+            BorderFactory.createEmptyBorder(8, 8, 8, 8)
+        ));
+        cmbGenero.addActionListener(e -> {
+            if (cmbGenero.getSelectedIndex() > 0) {
+                cmbGenero.setForeground(TEXT_PRIMARY);
+            }
+        });
+        container.add(cmbGenero);
+        container.add(Box.createVerticalStrut(10));
+        
+        JPanel panelEdad = new JPanel(new BorderLayout(10, 0));
+        panelEdad.setMaximumSize(new Dimension(270, 40));
+        panelEdad.setAlignmentX(Component.CENTER_ALIGNMENT);
+        panelEdad.setBackground(Color.WHITE);
+        panelEdad.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(BORDER_COLOR, 1),
+            BorderFactory.createEmptyBorder(8, 12, 8, 12)
+        ));
+        
+        JLabel lblEdad = new JLabel("Edad:");
+        lblEdad.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        lblEdad.setForeground(TEXT_SECONDARY);
+        
+        SpinnerNumberModel modeloEdad = new SpinnerNumberModel(18, 16, 120, 1);
+        spnEdad = new JSpinner(modeloEdad);
+        spnEdad.setFont(new Font("Segoe UI", Font.BOLD, 15));
+        spnEdad.setPreferredSize(new Dimension(100, 24));
+        
+        JSpinner.DefaultEditor editor = (JSpinner.DefaultEditor) spnEdad.getEditor();
+        editor.getTextField().setHorizontalAlignment(JTextField.CENTER);
+        editor.getTextField().setEditable(false);
+        editor.getTextField().setFont(new Font("Segoe UI", Font.BOLD, 15));
+        
+        spnEdad.setBorder(BorderFactory.createLineBorder(BORDER_COLOR, 1));
+        
+        panelEdad.add(lblEdad, BorderLayout.WEST);
+        panelEdad.add(spnEdad, BorderLayout.EAST);
+        
+        container.add(panelEdad);
         container.add(Box.createVerticalStrut(10));
         
         JPanel panelPasswordReg = new JPanel(new BorderLayout(0, 0));
@@ -517,6 +568,18 @@ public class VentanaLogin extends JFrame {
             return;
         }
         
+        if (cmbGenero.getSelectedIndex() == 0) {
+            mostrarError("Por favor selecciona tu género");
+            return;
+        }
+        
+        int edad = (int) spnEdad.getValue();
+        
+        if (edad < 16) {
+            mostrarError("Debes tener al menos 16 años para usar Instagram");
+            return;
+        }
+        
         if (password.isEmpty() || password.equals("Contraseña")) {
             mostrarError("Por favor ingresa una contraseña");
             return;
@@ -537,7 +600,9 @@ public class VentanaLogin extends JFrame {
             return;
         }
         
-        if (gestorUsuarios.registrarUsuario(username, nombreCompleto, password)) {
+        char genero = cmbGenero.getSelectedIndex() == 1 ? 'M' : 'F';
+        
+        if (gestorUsuarios.registrarUsuario(username, nombreCompleto, genero, edad, password)) {
             mostrarExito("¡Cuenta creada exitosamente!");
             Usuario usuario = gestorUsuarios.obtenerUsuario(username);
             abrirInstagram(usuario);
@@ -548,8 +613,7 @@ public class VentanaLogin extends JFrame {
     
     private void abrirInstagram(Usuario usuario) {
         GestorINSTA gestorINSTA = new GestorINSTA(usuario);
-        GestorUsuariosLocal gestorUsuariosLocal = new GestorUsuariosLocal();
-        VentanaINSTA ventanaINSTA = new VentanaINSTA(usuario, gestorINSTA, gestorUsuariosLocal);
+        VentanaINSTA ventanaINSTA = new VentanaINSTA(usuario, gestorINSTA, gestorUsuarios);
         ventanaINSTA.setVisible(true);
         
         dispose();

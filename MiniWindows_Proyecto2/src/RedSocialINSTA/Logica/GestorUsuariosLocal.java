@@ -53,12 +53,12 @@ public class GestorUsuariosLocal {
         return usuarios.get(username);
     }
     
-    public boolean registrarUsuario(String username, String nombreCompleto, String password) {
+    public boolean registrarUsuario(String username, String nombreCompleto, char genero, int edad, String password) {
         if (existeUsuario(username)) {
             return false;
         }
         
-        Usuario nuevoUsuario = new Usuario(username, nombreCompleto, password, true);
+        Usuario nuevoUsuario = new Usuario(username, nombreCompleto, genero, edad, password, true);
         usuarios.put(username, nuevoUsuario);
         guardarUsuarios();
         return true;
@@ -73,6 +73,11 @@ public class GestorUsuariosLocal {
         return usuarios.size();
     }
     
+    /**
+     * Busca usuarios por username (búsqueda parcial)
+     * @param termino Término de búsqueda
+     * @return Lista de usuarios que coinciden
+     */
     public ArrayList<Usuario> buscarUsuarios(String termino) {
         ArrayList<Usuario> resultados = new ArrayList<>();
         
@@ -83,6 +88,7 @@ public class GestorUsuariosLocal {
         String terminoLower = termino.toLowerCase();
         
         for (Usuario usuario : usuarios.values()) {
+            // Buscar por username o nombre completo (case insensitive)
             if (usuario.getUsername().toLowerCase().contains(terminoLower) ||
                 usuario.getNombreCompleto().toLowerCase().contains(terminoLower)) {
                 resultados.add(usuario);
@@ -91,11 +97,21 @@ public class GestorUsuariosLocal {
         
         return resultados;
     }
-
+    
+    /**
+     * Obtiene todos los usuarios registrados
+     * @return Lista de todos los usuarios
+     */
     public ArrayList<Usuario> obtenerTodosLosUsuarios() {
         return new ArrayList<>(usuarios.values());
     }
     
+    /**
+     * Obtiene usuarios sugeridos (excluyendo al usuario actual)
+     * @param usernameActual Username del usuario actual
+     * @param limite Cantidad máxima de usuarios a retornar
+     * @return Lista de usuarios sugeridos
+     */
     public ArrayList<Usuario> obtenerUsuariosSugeridos(String usernameActual, int limite) {
         ArrayList<Usuario> sugeridos = new ArrayList<>();
         

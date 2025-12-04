@@ -38,6 +38,10 @@ public class Usuario implements Serializable {
     public static Usuario crearAdmin() {
         return new Usuario("Administrador", "admin", "admin123", true);
     }
+
+    public Usuario(String username, String nombreCompleto, char genero, int edad, String password, boolean b) {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    }
     
     // método para verificar contraseña
     public boolean verificarPassword(String password) {
