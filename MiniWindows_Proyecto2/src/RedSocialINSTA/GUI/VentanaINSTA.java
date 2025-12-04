@@ -24,19 +24,16 @@ public class VentanaINSTA extends JFrame {
     private GestorNotificaciones gestorNotificaciones;
     private Usuario usuarioActual;
     
-    // Componentes principales
     private JPanel panelLateral;
     private JPanel panelContenido;
     private CardLayout cardLayout;
     
-    // Paneles de contenido
     private PanelTimeline panelTimeline;
     private PanelExplorar panelExplorar;
     private PanelPerfil panelPerfil;
     private PanelMensajes panelMensajes;
     private PanelNotificaciones panelNotificaciones;
     
-    // Colores del tema Instagram
     private static final Color BACKGROUND_COLOR = new Color(250, 250, 250);
     private static final Color SIDEBAR_COLOR = Color.WHITE;
     private static final Color BORDER_COLOR = new Color(219, 219, 219);
@@ -59,22 +56,18 @@ public class VentanaINSTA extends JFrame {
         setLayout(new BorderLayout());
         getContentPane().setBackground(BACKGROUND_COLOR);
         
-        // Panel lateral (sidebar)
         crearPanelLateral();
         
-        // Panel de contenido principal con CardLayout
         cardLayout = new CardLayout();
         panelContenido = new JPanel(cardLayout);
         panelContenido.setBackground(BACKGROUND_COLOR);
         
-        // Crear los diferentes paneles
         panelTimeline = new PanelTimeline(gestorINSTA, this);
         panelExplorar = new PanelExplorar(gestorINSTA, gestorUsuarios, this);
         panelPerfil = new PanelPerfil(gestorINSTA, usuarioActual.getUsername(), this);
         panelMensajes = new PanelMensajes(gestorINSTA);
         panelNotificaciones = new PanelNotificaciones(gestorINSTA, gestorNotificaciones, this);
         
-        // Agregar paneles al CardLayout
         panelContenido.add(panelTimeline, "TIMELINE");
         panelContenido.add(panelExplorar, "EXPLORAR");
         panelContenido.add(panelPerfil, "PERFIL");
@@ -84,7 +77,6 @@ public class VentanaINSTA extends JFrame {
         add(panelLateral, BorderLayout.WEST);
         add(panelContenido, BorderLayout.CENTER);
         
-        // Mostrar timeline por defecto
         mostrarTimeline();
     }
     
@@ -107,7 +99,6 @@ public class VentanaINSTA extends JFrame {
         lblLogo.setBorder(BorderFactory.createEmptyBorder(30, 20, 30, 20));
         panelLateral.add(lblLogo);
         
-        // Botones de navegación con iconos
         panelLateral.add(crearBotonNavegacion("Inicio", IconManager.ICON_HOME, e -> mostrarTimeline()));
         panelLateral.add(Box.createVerticalStrut(5));
         
@@ -126,10 +117,8 @@ public class VentanaINSTA extends JFrame {
         panelLateral.add(crearBotonNavegacion("Perfil", IconManager.ICON_PROFILE, e -> mostrarPerfil()));
         panelLateral.add(Box.createVerticalStrut(5));
         
-        // Espaciador
         panelLateral.add(Box.createVerticalGlue());
         
-        // Botón de cerrar sesión
         panelLateral.add(crearBotonNavegacion("Cerrar Sesión", IconManager.ICON_LOGOUT, e -> cerrarSesion()));
         panelLateral.add(Box.createVerticalStrut(20));
     }
@@ -137,7 +126,6 @@ public class VentanaINSTA extends JFrame {
     private JButton crearBotonNavegacion(String texto, String iconoNombre, ActionListener action) {
         JButton btn = new JButton(texto);
         
-        // Usar IconManager que intenta PNG primero, luego IconDrawer como fallback
         ImageIcon icono = IconManager.getIconScaled(iconoNombre, 24, 24);
         
         if (icono != null) {

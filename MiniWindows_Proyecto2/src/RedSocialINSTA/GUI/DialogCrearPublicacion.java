@@ -46,7 +46,6 @@ public class DialogCrearPublicacion extends JDialog {
         setLayout(new BorderLayout(0, 0));
         getContentPane().setBackground(BACKGROUND_COLOR);
         
-        // Header
         JPanel header = new JPanel(new BorderLayout());
         header.setBackground(BACKGROUND_COLOR);
         header.setBorder(new CompoundBorder(
@@ -73,13 +72,11 @@ public class DialogCrearPublicacion extends JDialog {
         
         add(header, BorderLayout.NORTH);
         
-        // Centro - contenido y preview de imagen
         JPanel centro = new JPanel();
         centro.setLayout(new BoxLayout(centro, BoxLayout.Y_AXIS));
         centro.setBackground(BACKGROUND_COLOR);
         centro.setBorder(BorderFactory.createEmptyBorder(16, 16, 16, 16));
         
-        // Área de texto para el contenido
         JLabel lblContenido = new JLabel("Escribe algo...");
         lblContenido.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         lblContenido.setForeground(TEXT_SECONDARY);
@@ -104,7 +101,6 @@ public class DialogCrearPublicacion extends JDialog {
         centro.add(scrollContenido);
         centro.add(Box.createVerticalStrut(16));
         
-        // Sección de imagen
         JPanel panelImagen = new JPanel();
         panelImagen.setLayout(new BoxLayout(panelImagen, BoxLayout.Y_AXIS));
         panelImagen.setBackground(BACKGROUND_COLOR);
@@ -129,7 +125,6 @@ public class DialogCrearPublicacion extends JDialog {
         
         btnSeleccionarImagen.addActionListener(e -> seleccionarImagen());
         
-        // Panel de preview de imagen
         lblImagenPreview = new JLabel();
         lblImagenPreview.setBorder(new LineBorder(BORDER_COLOR, 1));
         lblImagenPreview.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -157,7 +152,6 @@ public class DialogCrearPublicacion extends JDialog {
         
         add(centro, BorderLayout.CENTER);
         
-        // Footer con botones
         JPanel footer = new JPanel(new FlowLayout(FlowLayout.RIGHT, 12, 12));
         footer.setBackground(BACKGROUND_COLOR);
         footer.setBorder(new MatteBorder(1, 0, 0, 0, BORDER_COLOR));
@@ -210,7 +204,6 @@ public class DialogCrearPublicacion extends JDialog {
         try {
             ImageIcon iconoOriginal = new ImageIcon(imagenSeleccionada.getAbsolutePath());
             
-            // Escalar imagen para preview (máximo 400x300)
             int anchoMax = 400;
             int altoMax = 300;
             
@@ -270,7 +263,6 @@ public class DialogCrearPublicacion extends JDialog {
             return;
         }
         
-        // Crear la publicación
         if (imagenSeleccionada != null) {
             gestorINSTA.crearPublicacion(contenido, imagenSeleccionada.getAbsolutePath());
         } else {

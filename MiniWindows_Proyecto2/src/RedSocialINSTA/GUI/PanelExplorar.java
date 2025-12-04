@@ -47,11 +47,9 @@ public class PanelExplorar extends JPanel {
         setLayout(new BorderLayout());
         setBackground(BACKGROUND_COLOR);
         
-        // Panel de búsqueda
         JPanel panelBusqueda = crearPanelBusqueda();
         add(panelBusqueda, BorderLayout.NORTH);
         
-        // Panel de resultados
         panelResultados = new JPanel();
         panelResultados.setLayout(new BoxLayout(panelResultados, BoxLayout.Y_AXIS));
         panelResultados.setBackground(BACKGROUND_COLOR);
@@ -63,7 +61,6 @@ public class PanelExplorar extends JPanel {
         
         add(scrollResultados, BorderLayout.CENTER);
         
-        // Mostrar contenido inicial
         mostrarSugerencias();
     }
     
@@ -91,7 +88,6 @@ public class PanelExplorar extends JPanel {
             BorderFactory.createEmptyBorder(8, 12, 8, 12)
         ));
         
-        // Búsqueda en tiempo real mientras escribe
         txtBusqueda.addKeyListener(new KeyAdapter() {
             @Override
             public void keyReleased(KeyEvent e) {
@@ -135,12 +131,9 @@ public class PanelExplorar extends JPanel {
         
         panelResultados.removeAll();
         
-        // Detectar tipo de búsqueda
         if (termino.startsWith("#")) {
-            // Búsqueda de hashtags
             buscarHashtags(termino.substring(1));
         } else {
-            // Búsqueda de usuarios (con o sin @)
             String terminoLimpio = termino.startsWith("@") ? termino.substring(1) : termino;
             buscarUsuarios(terminoLimpio);
         }
@@ -167,7 +160,6 @@ public class PanelExplorar extends JPanel {
         String usernameActual = gestorINSTA.getUsernameActual();
         
         for (Usuario usuario : usuarios) {
-            // No mostrar al usuario actual en los resultados
             if (!usuario.getUsername().equals(usernameActual)) {
                 JPanel tarjeta = crearTarjetaUsuario(usuario.getUsername(), usuario.getNombreCompleto());
                 panelResultados.add(tarjeta);
@@ -175,7 +167,6 @@ public class PanelExplorar extends JPanel {
             }
         }
         
-        // Si solo se encontró al usuario actual, mostrar mensaje
         if (usuarios.size() == 1 && usuarios.get(0).getUsername().equals(usernameActual)) {
             panelResultados.removeAll();
             mostrarMensajeVacio("No se encontraron otros usuarios con \"" + termino + "\"");
@@ -183,7 +174,6 @@ public class PanelExplorar extends JPanel {
     }
     
     private void buscarHashtags(String hashtag) {
-        // Limpiar el hashtag si viene con #
         String hashtagLimpio = hashtag.startsWith("#") ? hashtag.substring(1) : hashtag;
         
         ArrayList<Publicacion> publicaciones = gestorINSTA.buscarPorHashtag(hashtagLimpio);
@@ -239,13 +229,11 @@ public class PanelExplorar extends JPanel {
         tarjeta.setMaximumSize(new Dimension(600, 80));
         tarjeta.setAlignmentX(Component.LEFT_ALIGNMENT);
         
-        // Avatar
         JLabel lblAvatar = new JLabel();
         ImageIcon avatarIcon = IconManager.getDefaultAvatarScaled(48);
         lblAvatar.setIcon(avatarIcon);
         lblAvatar.setPreferredSize(new Dimension(48, 48));
         
-        // Info del usuario
         JPanel panelInfo = new JPanel();
         panelInfo.setLayout(new BoxLayout(panelInfo, BoxLayout.Y_AXIS));
         panelInfo.setBackground(CARD_COLOR);
@@ -273,7 +261,6 @@ public class PanelExplorar extends JPanel {
         panelInfo.add(btnUsername);
         panelInfo.add(lblNombre);
         
-        // Botón de seguir/siguiendo
         JButton btnSeguir = crearBotonSeguir(username);
         btnSeguir.setPreferredSize(new Dimension(100, 32));
         
@@ -306,7 +293,6 @@ public class PanelExplorar extends JPanel {
         btn.addActionListener(e -> {
             gestorINSTA.toggleSeguir(username);
             
-            // Actualizar botón
             boolean ahoraSiguiendo = gestorINSTA.estaSiguiendo(username);
             btn.setText(ahoraSiguiendo ? "Siguiendo" : "Seguir");
             
@@ -341,7 +327,6 @@ public class PanelExplorar extends JPanel {
         panelResultados.add(lblDescripcion);
         panelResultados.add(Box.createVerticalStrut(24));
         
-        // Mostrar usuarios sugeridos
         String usernameActual = gestorINSTA.getUsernameActual();
         ArrayList<Usuario> sugeridos = gestorUsuarios.obtenerUsuariosSugeridos(usernameActual, 10);
         

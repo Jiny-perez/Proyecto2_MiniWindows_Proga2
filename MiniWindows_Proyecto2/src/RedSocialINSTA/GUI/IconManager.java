@@ -18,12 +18,10 @@ public class IconManager {
     private static final String RUTA_IMAGENES = "/RedSocialINSTA/Imagenes/";
     private static HashMap<String, ImageIcon> cache = new HashMap<>();
     
-    // Nombres de archivos
     public static final String LOGO = "instagram_logo.png";
     public static final String DEFAULT_AVATAR = "default_avatar.jpg";
     public static final String PLACEHOLDER_IMAGE = "placeholder_image.jpg";
     
-    // Iconos del sidebar
     public static final String ICON_HOME = "icon_home.png";
     public static final String ICON_HOME_FILLED = "icon_home_filled.png";
     public static final String ICON_SEARCH = "icon_search.png";
@@ -33,16 +31,11 @@ public class IconManager {
     public static final String ICON_PROFILE = "icon_profile.png";
     public static final String ICON_LOGOUT = "icon_logout.png";
     
-    // Iconos de acciones
     public static final String ICON_HEART_OUTLINE = "icon_heart_outline.png";
     public static final String ICON_HEART_FILLED = "icon_heart_filled.png";
     public static final String ICON_COMMENT = "icon_comment.png";
     public static final String ICON_SHARE = "icon_share.png";
-    
-    /**
-     * Obtiene un icono del cache o lo carga si no existe
-     * Si falla, usa IconDrawer para dibujar el icono
-     */
+
     public static ImageIcon getIcon(String nombreArchivo) {
         if (cache.containsKey(nombreArchivo)) {
             return cache.get(nombreArchivo);
@@ -52,7 +45,6 @@ public class IconManager {
             URL url = IconManager.class.getResource(RUTA_IMAGENES + nombreArchivo);
             if (url != null) {
                 ImageIcon icon = new ImageIcon(url);
-                // Verificar que la imagen se cargó correctamente
                 if (icon.getIconWidth() > 0 && icon.getIconHeight() > 0) {
                     cache.put(nombreArchivo, icon);
                     return icon;
@@ -62,7 +54,6 @@ public class IconManager {
             System.err.println("Error al cargar imagen " + nombreArchivo + ": " + e.getMessage());
         }
         
-        // Si falla, usar IconDrawer para dibujar el icono
         System.out.println("Usando IconDrawer para: " + nombreArchivo);
         ImageIcon drawnIcon = getDrawnIcon(nombreArchivo, 24);
         if (drawnIcon != null) {
@@ -72,10 +63,7 @@ public class IconManager {
         
         return crearIconoPlaceholder(24, 24);
     }
-    
-    /**
-     * Obtiene un icono dibujado según el nombre del archivo
-     */
+
     private static ImageIcon getDrawnIcon(String nombreArchivo, int size) {
         switch (nombreArchivo) {
             case ICON_HOME:
@@ -106,20 +94,14 @@ public class IconManager {
                 return null;
         }
     }
-    
-    /**
-     * Obtiene un icono escalado a un tamaño específico
-     * PRIORIDAD: 1) PNG desde archivo, 2) IconDrawer dibujado, 3) Placeholder
-     */
+
     public static ImageIcon getIconScaled(String nombreArchivo, int ancho, int alto) {
         String cacheKey = nombreArchivo + "_" + ancho + "x" + alto;
         
-        // Verificar cache primero
         if (cache.containsKey(cacheKey)) {
             return cache.get(cacheKey);
         }
         
-        // 1. PRIORIDAD ALTA: Intentar cargar PNG desde archivo y escalar
         try {
             URL url = IconManager.class.getResource(RUTA_IMAGENES + nombreArchivo);
             if (url != null) {
@@ -137,7 +119,6 @@ public class IconManager {
             System.err.println("Error al cargar PNG " + nombreArchivo + ": " + e.getMessage());
         }
         
-        // 2. FALLBACK: Intentar icono dibujado con IconDrawer
         ImageIcon drawnIcon = getDrawnIcon(nombreArchivo, ancho);
         if (drawnIcon != null) {
             cache.put(cacheKey, drawnIcon);
@@ -145,43 +126,27 @@ public class IconManager {
             return drawnIcon;
         }
         
-        // 3. ÚLTIMO RECURSO: Placeholder
         System.err.println("✗ No se pudo cargar: " + nombreArchivo);
         return crearIconoPlaceholder(ancho, alto);
     }
-    
-    /**
-     * Obtiene una imagen (no como icono) para uso en componentes
-     */
+
     public static Image getImage(String nombreArchivo) {
         ImageIcon icon = getIcon(nombreArchivo);
         return icon != null ? icon.getImage() : null;
     }
-    
-    /**
-     * Obtiene el logo de Instagram
-     */
+
     public static ImageIcon getLogo() {
         return getIcon(LOGO);
     }
-    
-    /**
-     * Obtiene el logo escalado
-     */
+
     public static ImageIcon getLogoScaled(int ancho, int alto) {
         return getIconScaled(LOGO, ancho, alto);
     }
-    
-    /**
-     * Obtiene avatar por defecto
-     */
+
     public static ImageIcon getDefaultAvatar() {
         return getIcon(DEFAULT_AVATAR);
     }
     
-    /**
-     * Obtiene avatar por defecto escalado (circular)
-     */
     public static ImageIcon getDefaultAvatarScaled(int tamano) {
         ImageIcon icon = getIconScaled(DEFAULT_AVATAR, tamano, tamano);
         if (icon != null && icon.getIconWidth() > 0) {
@@ -189,28 +154,19 @@ public class IconManager {
         }
         return IconDrawer.createDefaultAvatar(tamano);
     }
-    
-    /**
-     * Obtiene placeholder de imagen
-     */
+
     public static ImageIcon getPlaceholderImage() {
         return getIcon(PLACEHOLDER_IMAGE);
     }
-    
-    /**
-     * Pre-carga todos los iconos al inicio para mejor rendimiento
-     */
+
     public static void precargarIconos() {
         System.out.println("Precargando iconos...");
         
-        // Logo
         getIcon(LOGO);
         
-        // Defaults
         getIcon(DEFAULT_AVATAR);
         getIcon(PLACEHOLDER_IMAGE);
         
-        // Sidebar
         getIcon(ICON_HOME);
         getIcon(ICON_HOME_FILLED);
         getIcon(ICON_SEARCH);
@@ -220,7 +176,6 @@ public class IconManager {
         getIcon(ICON_PROFILE);
         getIcon(ICON_LOGOUT);
         
-        // Actions
         getIcon(ICON_HEART_OUTLINE);
         getIcon(ICON_HEART_FILLED);
         getIcon(ICON_COMMENT);
@@ -228,10 +183,7 @@ public class IconManager {
         
         System.out.println("Iconos precargados: " + cache.size());
     }
-    
-    /**
-     * Crea un icono placeholder en caso de error
-     */
+
     private static ImageIcon crearIconoPlaceholder(int ancho, int alto) {
         Image img = new java.awt.image.BufferedImage(ancho, alto, java.awt.image.BufferedImage.TYPE_INT_ARGB);
         Graphics2D g2d = (Graphics2D) img.getGraphics();
@@ -246,24 +198,15 @@ public class IconManager {
         
         return new ImageIcon(img);
     }
-    
-    /**
-     * Limpia el cache de iconos
-     */
+
     public static void limpiarCache() {
         cache.clear();
     }
-    
-    /**
-     * Obtiene el tamaño del cache
-     */
+
     public static int getCacheSize() {
         return cache.size();
     }
-    
-    /**
-     * Verifica si un icono existe
-     */
+
     public static boolean existeIcono(String nombreArchivo) {
         URL url = IconManager.class.getResource(RUTA_IMAGENES + nombreArchivo);
         return url != null;

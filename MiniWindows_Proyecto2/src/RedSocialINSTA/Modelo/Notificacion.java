@@ -16,17 +16,17 @@ import java.time.temporal.ChronoUnit;
 public class Notificacion implements Serializable {
     
     public enum TipoNotificacion {
-        LIKE,           // Alguien dio like a tu publicación
-        COMENTARIO,     // Alguien comentó en tu publicación
-        MENCION,        // Alguien te mencionó (@usuario)
-        SEGUIDOR        // Alguien comenzó a seguirte
+        LIKE,
+        COMENTARIO,
+        MENCION,
+        SEGUIDOR 
     }
     
     private TipoNotificacion tipo;
-    private String usernameOrigen;      // Usuario que generó la notificación
-    private String usernameDestino;     // Usuario que recibe la notificación
-    private String idPublicacion;       // ID de la publicación relacionada (si aplica)
-    private String contenido;           // Contenido adicional (comentario, etc.)
+    private String usernameOrigen;
+    private String usernameDestino;
+    private String idPublicacion;
+    private String contenido;
     private LocalDateTime fechaCreacion;
     private boolean leida;
     
@@ -45,7 +45,6 @@ public class Notificacion implements Serializable {
         this.contenido = contenido;
     }
     
-    // Getters
     public TipoNotificacion getTipo() { return tipo; }
     public String getUsernameOrigen() { return usernameOrigen; }
     public String getUsernameDestino() { return usernameDestino; }
@@ -54,12 +53,8 @@ public class Notificacion implements Serializable {
     public LocalDateTime getFechaCreacion() { return fechaCreacion; }
     public boolean isLeida() { return leida; }
     
-    // Setters
     public void setLeida(boolean leida) { this.leida = leida; }
     
-    /**
-     * Obtiene el mensaje de la notificación según su tipo
-     */
     public String getMensaje() {
         switch (tipo) {
             case LIKE:
@@ -75,9 +70,6 @@ public class Notificacion implements Serializable {
         }
     }
     
-    /**
-     * Obtiene el icono/emoji según el tipo de notificación
-     */
     public String getIcono() {
         switch (tipo) {
             case LIKE:
@@ -92,10 +84,7 @@ public class Notificacion implements Serializable {
                 return "📬";
         }
     }
-    
-    /**
-     * Calcula el tiempo transcurrido desde la notificación
-     */
+
     public String getTiempoTranscurrido() {
         LocalDateTime ahora = LocalDateTime.now();
         

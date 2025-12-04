@@ -44,7 +44,6 @@ public class PanelNotificaciones extends JPanel {
         setLayout(new BorderLayout());
         setBackground(BACKGROUND_COLOR);
         
-        // Header
         JPanel header = new JPanel(new BorderLayout());
         header.setBackground(CARD_COLOR);
         header.setBorder(new CompoundBorder(
@@ -60,7 +59,6 @@ public class PanelNotificaciones extends JPanel {
         
         add(header, BorderLayout.NORTH);
         
-        // Panel de notificaciones
         panelNotificaciones = new JPanel();
         panelNotificaciones.setLayout(new BoxLayout(panelNotificaciones, BoxLayout.Y_AXIS));
         panelNotificaciones.setBackground(BACKGROUND_COLOR);
@@ -78,13 +76,11 @@ public class PanelNotificaciones extends JPanel {
         
         String usernameActual = gestorINSTA.getUsernameActual();
         
-        // Obtener todas las notificaciones del usuario
         ArrayList<Notificacion> notificaciones = gestorNotificaciones.obtenerNotificaciones(usernameActual);
         
         if (notificaciones.isEmpty()) {
             mostrarMensajeVacio();
         } else {
-            // Marcar todas como leídas al abrir el panel
             gestorNotificaciones.marcarTodasComoLeidas(usernameActual);
             
             for (Notificacion notif : notificaciones) {
@@ -97,10 +93,7 @@ public class PanelNotificaciones extends JPanel {
         panelNotificaciones.revalidate();
         panelNotificaciones.repaint();
     }
-    
-    /**
-     * Crea una tarjeta visual para una notificación
-     */
+
     private JPanel crearTarjetaNotificacion(Notificacion notif) {
         JPanel tarjeta = new JPanel(new BorderLayout(12, 0));
         tarjeta.setBackground(CARD_COLOR);
@@ -111,18 +104,15 @@ public class PanelNotificaciones extends JPanel {
         tarjeta.setMaximumSize(new Dimension(800, 80));
         tarjeta.setAlignmentX(Component.LEFT_ALIGNMENT);
         
-        // Avatar del usuario origen
         JLabel lblAvatar = new JLabel();
         ImageIcon avatarIcon = IconManager.getDefaultAvatarScaled(40);
         lblAvatar.setIcon(avatarIcon);
         lblAvatar.setPreferredSize(new Dimension(40, 40));
         
-        // Panel de contenido
         JPanel panelContenido = new JPanel();
         panelContenido.setLayout(new BoxLayout(panelContenido, BoxLayout.Y_AXIS));
         panelContenido.setBackground(CARD_COLOR);
         
-        // Mensaje de la notificación con usuario clickable
         JPanel panelMensaje = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
         panelMensaje.setBackground(CARD_COLOR);
         panelMensaje.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -163,7 +153,6 @@ public class PanelNotificaciones extends JPanel {
         panelMensaje.add(btnUsuario);
         panelMensaje.add(lblAccion);
         
-        // Tiempo transcurrido
         JLabel lblTiempo = new JLabel(notif.getTiempoTranscurrido());
         lblTiempo.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         lblTiempo.setForeground(TEXT_SECONDARY);
@@ -173,10 +162,8 @@ public class PanelNotificaciones extends JPanel {
         panelContenido.add(Box.createVerticalStrut(4));
         panelContenido.add(lblTiempo);
         
-        // Botón de acción (Ver publicación o Ver perfil)
         JButton btnAccion = null;
         if (notif.getIdPublicacion() != null) {
-            // Tiene publicación asociada
             btnAccion = new JButton("Ver publicación");
             btnAccion.setFont(new Font("Segoe UI", Font.BOLD, 13));
             btnAccion.setForeground(new Color(0, 149, 246));
@@ -187,11 +174,9 @@ public class PanelNotificaciones extends JPanel {
             btnAccion.setPreferredSize(new Dimension(140, 32));
             
             btnAccion.addActionListener(e -> {
-                // Ir al timeline y mostrar la publicación
                 ventanaPrincipal.mostrarTimeline();
             });
         } else if (notif.getTipo() == Notificacion.TipoNotificacion.SEGUIDOR) {
-            // Es un nuevo seguidor
             btnAccion = new JButton("Ver perfil");
             btnAccion.setFont(new Font("Segoe UI", Font.BOLD, 13));
             btnAccion.setForeground(new Color(0, 149, 246));

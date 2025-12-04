@@ -46,23 +46,17 @@ public class GestorNotificaciones {
             System.err.println("Error al guardar notificaciones: " + e.getMessage());
         }
     }
-    
-    /**
-     * Crea una notificación de like
-     */
+
     public void crearNotificacionLike(String usernameOrigen, String usernameDestino, String idPublicacion) {
-        // No crear notificación si el usuario se da like a sí mismo
         if (usernameOrigen.equals(usernameDestino)) {
             return;
         }
         
-        // Verificar si ya existe una notificación de like de este usuario en esta publicación
         for (Notificacion notif : notificaciones) {
             if (notif.getTipo() == TipoNotificacion.LIKE &&
                 notif.getUsernameOrigen().equals(usernameOrigen) &&
                 notif.getUsernameDestino().equals(usernameDestino) &&
                 notif.getIdPublicacion().equals(idPublicacion)) {
-                // Ya existe, no crear duplicado
                 return;
             }
         }
@@ -71,10 +65,7 @@ public class GestorNotificaciones {
         notificaciones.add(notif);
         guardarNotificaciones();
     }
-    
-    /**
-     * Elimina una notificación de like (cuando se quita el like)
-     */
+
     public void eliminarNotificacionLike(String usernameOrigen, String usernameDestino, String idPublicacion) {
         notificaciones.removeIf(notif -> 
             notif.getTipo() == TipoNotificacion.LIKE &&
@@ -84,13 +75,9 @@ public class GestorNotificaciones {
         );
         guardarNotificaciones();
     }
-    
-    /**
-     * Crea una notificación de comentario
-     */
+
     public void crearNotificacionComentario(String usernameOrigen, String usernameDestino, 
                                            String idPublicacion, String contenidoComentario) {
-        // No crear notificación si el usuario comenta su propia publicación
         if (usernameOrigen.equals(usernameDestino)) {
             return;
         }
@@ -100,10 +87,7 @@ public class GestorNotificaciones {
         notificaciones.add(notif);
         guardarNotificaciones();
     }
-    
-    /**
-     * Crea una notificación de mención
-     */
+
     public void crearNotificacionMencion(String usernameOrigen, String usernameDestino, 
                                         String idPublicacion, String contenido) {
         // No crear notificación si el usuario se menciona a sí mismo
@@ -116,12 +100,8 @@ public class GestorNotificaciones {
         notificaciones.add(notif);
         guardarNotificaciones();
     }
-    
-    /**
-     * Crea una notificación de nuevo seguidor
-     */
+
     public void crearNotificacionSeguidor(String usernameOrigen, String usernameDestino) {
-        // Verificar si ya existe
         for (Notificacion notif : notificaciones) {
             if (notif.getTipo() == TipoNotificacion.SEGUIDOR &&
                 notif.getUsernameOrigen().equals(usernameOrigen) &&
@@ -134,10 +114,7 @@ public class GestorNotificaciones {
         notificaciones.add(notif);
         guardarNotificaciones();
     }
-    
-    /**
-     * Elimina una notificación de seguidor (cuando se deja de seguir)
-     */
+
     public void eliminarNotificacionSeguidor(String usernameOrigen, String usernameDestino) {
         notificaciones.removeIf(notif -> 
             notif.getTipo() == TipoNotificacion.SEGUIDOR &&
@@ -146,10 +123,7 @@ public class GestorNotificaciones {
         );
         guardarNotificaciones();
     }
-    
-    /**
-     * Obtiene todas las notificaciones de un usuario (ordenadas por fecha, más recientes primero)
-     */
+
     public ArrayList<Notificacion> obtenerNotificaciones(String username) {
         ArrayList<Notificacion> notificacionesUsuario = new ArrayList<>();
         
@@ -159,7 +133,6 @@ public class GestorNotificaciones {
             }
         }
         
-        // Ordenar por fecha (más recientes primero)
         Collections.sort(notificacionesUsuario, new Comparator<Notificacion>() {
             @Override
             public int compare(Notificacion n1, Notificacion n2) {
@@ -169,10 +142,7 @@ public class GestorNotificaciones {
         
         return notificacionesUsuario;
     }
-    
-    /**
-     * Obtiene la cantidad de notificaciones no leídas de un usuario
-     */
+
     public int contarNoLeidas(String username) {
         int count = 0;
         for (Notificacion notif : notificaciones) {
@@ -194,11 +164,8 @@ public class GestorNotificaciones {
         }
         guardarNotificaciones();
     }
-    
-    /**
-     * Limpia las notificaciones antiguas (más de 30 días)
-     */
+
     public void limpiarNotificacionesAntiguas() {
-        // Implementación futura si se desea
+        // En proceso
     }
 }

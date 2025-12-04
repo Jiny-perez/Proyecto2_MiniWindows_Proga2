@@ -54,13 +54,10 @@ public class TarjetaPublicacion extends JPanel {
         setMaximumSize(new Dimension(470, 2000));
         setAlignmentX(Component.CENTER_ALIGNMENT);
         
-        // Header (usuario y opciones)
         add(crearHeader(), BorderLayout.NORTH);
         
-        // Centro (imagen o contenido)
         add(crearCentro(), BorderLayout.CENTER);
         
-        // Footer (likes, comentarios, etc)
         add(crearFooter(), BorderLayout.SOUTH);
     }
     
@@ -69,7 +66,6 @@ public class TarjetaPublicacion extends JPanel {
         header.setBackground(BACKGROUND_COLOR);
         header.setBorder(BorderFactory.createEmptyBorder(12, 12, 12, 12));
         
-        // Panel izquierdo con avatar + usuario
         JPanel panelUsuario = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
         panelUsuario.setBackground(BACKGROUND_COLOR);
         
@@ -79,7 +75,6 @@ public class TarjetaPublicacion extends JPanel {
         lblAvatar.setPreferredSize(new Dimension(32, 32));
         panelUsuario.add(lblAvatar);
         
-        // Botón de usuario
         JButton btnUsuario = new JButton("@" + publicacion.getUsername());
         btnUsuario.setFont(new Font("Segoe UI", Font.BOLD, 14));
         btnUsuario.setForeground(TEXT_PRIMARY);
@@ -98,16 +93,16 @@ public class TarjetaPublicacion extends JPanel {
         
         header.add(panelUsuario, BorderLayout.WEST);
         
-        // Botón de opciones (solo si es el autor)
         if (publicacion.getUsername().equals(gestorINSTA.getUsernameActual())) {
-            JButton btnOpciones = new JButton("⋯");
-            btnOpciones.setFont(new Font("Segoe UI", Font.BOLD, 20));
+            JButton btnOpciones = new JButton("⋮");  // Tres puntos verticales
+            btnOpciones.setFont(new Font("Arial Unicode MS", Font.BOLD, 24));
             btnOpciones.setForeground(TEXT_PRIMARY);
             btnOpciones.setBackground(BACKGROUND_COLOR);
-            btnOpciones.setBorderPainted(false);
+            btnOpciones.setBorder(null);  // Sin borde
             btnOpciones.setContentAreaFilled(false);
             btnOpciones.setFocusPainted(false);
             btnOpciones.setCursor(new Cursor(Cursor.HAND_CURSOR));
+            btnOpciones.setMargin(new Insets(0, 0, 0, 0));  // Sin márgenes
             
             btnOpciones.addActionListener(e -> mostrarMenuOpciones());
             
@@ -121,7 +116,6 @@ public class TarjetaPublicacion extends JPanel {
         JPanel centro = new JPanel(new BorderLayout());
         centro.setBackground(BACKGROUND_COLOR);
         
-        // Si tiene imagen, mostrarla
         if (publicacion.tieneImagen()) {
             JLabel lblImagen = cargarImagen(publicacion.getRutaImagen());
             if (lblImagen != null) {
@@ -129,7 +123,6 @@ public class TarjetaPublicacion extends JPanel {
             }
         }
         
-        // Contenido del texto
         if (publicacion.getContenido() != null && !publicacion.getContenido().trim().isEmpty()) {
             JTextArea txtContenido = new JTextArea(publicacion.getContenido());
             txtContenido.setFont(new Font("Segoe UI", Font.PLAIN, 14));
@@ -152,13 +145,11 @@ public class TarjetaPublicacion extends JPanel {
             if (archivoImagen.exists()) {
                 Image imagen = ImageIO.read(archivoImagen);
                 
-                // Escalar imagen para que quepa en el ancho de la tarjeta (470px)
                 int anchoDeseado = 470;
                 int altoOriginal = imagen.getHeight(null);
                 int anchoOriginal = imagen.getWidth(null);
                 int altoDeseado = (altoOriginal * anchoDeseado) / anchoOriginal;
                 
-                // Limitar altura máxima
                 if (altoDeseado > 600) {
                     altoDeseado = 600;
                 }
@@ -184,7 +175,6 @@ public class TarjetaPublicacion extends JPanel {
         footer.setBackground(BACKGROUND_COLOR);
         footer.setBorder(BorderFactory.createEmptyBorder(4, 12, 12, 12));
         
-        // Botones de acción (like, comentar, compartir)
         JPanel panelAcciones = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
         panelAcciones.setBackground(BACKGROUND_COLOR);
         
@@ -219,7 +209,6 @@ public class TarjetaPublicacion extends JPanel {
         footer.add(panelAcciones);
         footer.add(Box.createVerticalStrut(8));
         
-        // Cantidad de likes
         lblLikes = new JLabel(obtenerTextoLikes());
         lblLikes.setFont(new Font("Segoe UI", Font.BOLD, 14));
         lblLikes.setForeground(TEXT_PRIMARY);
@@ -228,14 +217,12 @@ public class TarjetaPublicacion extends JPanel {
         
         footer.add(Box.createVerticalStrut(4));
         
-        // Tiempo transcurrido
         JLabel lblTiempo = new JLabel(publicacion.getTiempoTranscurrido());
         lblTiempo.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         lblTiempo.setForeground(TEXT_SECONDARY);
         lblTiempo.setAlignmentX(Component.LEFT_ALIGNMENT);
         footer.add(lblTiempo);
         
-        // Panel de comentarios (inicialmente oculto)
         panelComentarios = new JPanel();
         panelComentarios.setLayout(new BoxLayout(panelComentarios, BoxLayout.Y_AXIS));
         panelComentarios.setBackground(BACKGROUND_COLOR);
@@ -253,16 +240,13 @@ public class TarjetaPublicacion extends JPanel {
         
         boolean tieneLikeAhora = publicacion.tieneLikeDe(usernameActual);
         
-        // Crear o eliminar notificación de like
         if (tieneLikeAhora && !tenialikeAntes) {
-            // Se agregó el like - crear notificación
             ventanaPrincipal.getGestorNotificaciones().crearNotificacionLike(
                 usernameActual, 
                 publicacion.getUsername(), 
                 publicacion.getId()
             );
         } else if (!tieneLikeAhora && tenialikeAntes) {
-            // Se quitó el like - eliminar notificación
             ventanaPrincipal.getGestorNotificaciones().eliminarNotificacionLike(
                 usernameActual, 
                 publicacion.getUsername(), 
@@ -307,7 +291,6 @@ public class TarjetaPublicacion extends JPanel {
         
         panelComentarios.add(Box.createVerticalStrut(10));
         
-        // Mostrar comentarios existentes
         ArrayList<Comentario> comentarios = publicacion.getComentarios();
         
         for (Comentario comentario : comentarios) {
@@ -329,7 +312,6 @@ public class TarjetaPublicacion extends JPanel {
             panelComentarios.add(panelComentario);
         }
         
-        // Campo para agregar comentario
         JPanel panelNuevoComentario = new JPanel(new BorderLayout(5, 0));
         panelNuevoComentario.setBackground(BACKGROUND_COLOR);
         panelNuevoComentario.setBorder(BorderFactory.createEmptyBorder(8, 0, 0, 0));
@@ -372,6 +354,8 @@ public class TarjetaPublicacion extends JPanel {
         JPopupMenu menu = new JPopupMenu();
         
         JMenuItem itemEliminar = new JMenuItem("Eliminar publicación");
+        itemEliminar.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        itemEliminar.setForeground(new Color(237, 73, 86)); // Texto rojo
         itemEliminar.addActionListener(e -> eliminarPublicacion());
         
         menu.add(itemEliminar);

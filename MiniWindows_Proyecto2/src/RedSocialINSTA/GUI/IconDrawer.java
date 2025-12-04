@@ -19,15 +19,11 @@ public class IconDrawer {
     private static final Color ICON_COLOR_LIGHT = new Color(142, 142, 142);
     private static final Color ACCENT_COLOR = new Color(0, 149, 246);
     private static final Color LIKE_COLOR = new Color(237, 73, 86);
-    
-    /**
-     * Crea un ImageIcon dibujado con Graphics2D
-     */
+
     private static ImageIcon createIcon(int size, IconPainter painter) {
         BufferedImage image = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g2d = image.createGraphics();
         
-        // Antialiasing para suavidad
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
         
@@ -36,10 +32,7 @@ public class IconDrawer {
         
         return new ImageIcon(image);
     }
-    
-    /**
-     * Icono de Casa/Home
-     */
+
     public static ImageIcon createHomeIcon(int size) {
         return createIcon(size, (g, s) -> {
             g.setColor(ICON_COLOR);
@@ -63,25 +56,19 @@ public class IconDrawer {
             g.drawRect(doorX, doorY, doorWidth, doorHeight);
         });
     }
-    
-    /**
-     * Icono de Casa/Home Relleno
-     */
+
     public static ImageIcon createHomeFilledIcon(int size) {
         return createIcon(size, (g, s) -> {
             g.setColor(ICON_COLOR);
             
             int margin = s / 6;
             
-            // Techo relleno
             int[] xPoints = {s/2, s - margin, margin};
             int[] yPoints = {margin, margin + s/3, margin + s/3};
             g.fillPolygon(xPoints, yPoints, 3);
             
-            // Casa rellena
             g.fillRect(margin + s/6, margin + s/3, s - 2*margin - s/3, s - margin - s/3);
             
-            // Puerta (más oscura)
             g.setColor(Color.WHITE);
             int doorWidth = s/5;
             int doorHeight = s/3;
@@ -89,9 +76,6 @@ public class IconDrawer {
         });
     }
     
-    /**
-     * Icono de Lupa/Search
-     */
     public static ImageIcon createSearchIcon(int size) {
         return createIcon(size, (g, s) -> {
             g.setColor(ICON_COLOR);
@@ -113,25 +97,19 @@ public class IconDrawer {
             g.drawLine(startX, startY, endX, endY);
         });
     }
-    
-    /**
-     * Icono de Mensaje/Chat
-     */
+
     public static ImageIcon createMessageIcon(int size) {
         return createIcon(size, (g, s) -> {
             g.setColor(ICON_COLOR);
             g.setStroke(new BasicStroke(2.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
             
-            // Bocadillo mucho más grande
-            int margin = (int)(s * 0.05); // Margen muy pequeño
+            int margin = (int)(s * 0.05);
             int rectWidth = (int)(s * 0.85);
             int rectHeight = (int)(s * 0.6);
             int cornerRadius = s / 4;
             
-            // Rectángulo redondeado principal
             g.drawRoundRect(margin, margin, rectWidth, rectHeight, cornerRadius, cornerRadius);
             
-            // Cola del bocadillo (más visible)
             int tailBaseY = margin + rectHeight;
             int tailBaseX1 = margin + rectWidth / 5;
             int tailTipX = margin + rectWidth / 8;
@@ -143,42 +121,31 @@ public class IconDrawer {
         });
     }
     
-    /**
-     * Icono de Campana/Notificación
-     */
     public static ImageIcon createNotificationIcon(int size) {
         return createIcon(size, (g, s) -> {
             g.setColor(ICON_COLOR);
             g.setStroke(new BasicStroke(2.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
             
-            // Campana mucho más grande
             int bellWidth = (int)(s * 0.65);
             int bellHeight = (int)(s * 0.6);
             int centerX = s / 2;
-            int topY = (int)(s * 0.08); // Margen superior pequeño
+            int topY = (int)(s * 0.08);
             
-            // Cuerpo de la campana (arco)
             g.drawArc(centerX - bellWidth/2, topY, bellWidth, bellHeight, 0, -180);
             
-            // Línea inferior de la campana
             int bottomY = topY + bellHeight/2;
             g.drawLine(centerX - bellWidth/2, bottomY, centerX + bellWidth/2, bottomY);
             
-            // Asa superior de la campana
             int handleWidth = (int)(s * 0.2);
             int handleY = topY - (int)(s * 0.1);
             g.drawArc(centerX - handleWidth/2, handleY, handleWidth, (int)(s * 0.12), 0, 180);
             
-            // Badajo (bolita inferior)
             int clapperSize = (int)(s * 0.18);
             int clapperY = bottomY + (int)(s * 0.03);
             g.fillOval(centerX - clapperSize/2, clapperY, clapperSize, clapperSize);
         });
     }
     
-    /**
-     * Icono de Plus/Crear
-     */
     public static ImageIcon createPlusIcon(int size) {
         return createIcon(size, (g, s) -> {
             g.setColor(ICON_COLOR);
@@ -186,17 +153,12 @@ public class IconDrawer {
             
             int margin = s / 4;
             
-            // Línea horizontal
             g.drawLine(margin, s/2, s - margin, s/2);
             
-            // Línea vertical
             g.drawLine(s/2, margin, s/2, s - margin);
         });
     }
     
-    /**
-     * Icono de Persona/Perfil
-     */
     public static ImageIcon createProfileIcon(int size) {
         return createIcon(size, (g, s) -> {
             g.setColor(ICON_COLOR);
@@ -204,11 +166,9 @@ public class IconDrawer {
             
             int margin = s / 6;
             
-            // Cabeza (círculo)
             int headSize = s / 3;
             g.drawOval(s/2 - headSize/2, margin, headSize, headSize);
             
-            // Cuerpo (semicírculo)
             int bodyWidth = (int)(s * 0.65);
             int bodyHeight = (int)(s * 0.4);
             g.drawArc(s/2 - bodyWidth/2, margin + headSize + margin/2, 
@@ -216,9 +176,6 @@ public class IconDrawer {
         });
     }
     
-    /**
-     * Icono de Puerta/Logout
-     */
     public static ImageIcon createLogoutIcon(int size) {
         return createIcon(size, (g, s) -> {
             g.setColor(ICON_COLOR);
@@ -226,29 +183,23 @@ public class IconDrawer {
             
             int margin = s / 5;
             
-            // Marco de puerta
             g.drawRoundRect(margin, margin, (int)(s * 0.5), s - 2*margin, s/8, s/8);
             
-            // Flecha saliendo
             int arrowStartX = (int)(s * 0.4);
             int arrowEndX = s - margin;
             int arrowY = s / 2;
             
             g.drawLine(arrowStartX, arrowY, arrowEndX, arrowY);
             
-            // Punta de flecha
             int arrowSize = s / 6;
             g.drawLine(arrowEndX, arrowY, arrowEndX - arrowSize, arrowY - arrowSize);
             g.drawLine(arrowEndX, arrowY, arrowEndX - arrowSize, arrowY + arrowSize);
         });
     }
     
-    /**
-     * Icono de Corazón Outline (sin rellenar) - NEGRO
-     */
     public static ImageIcon createHeartOutlineIcon(int size) {
         return createIcon(size, (g, s) -> {
-            g.setColor(Color.BLACK);  // Negro en lugar de gris
+            g.setColor(Color.BLACK);
             g.setStroke(new BasicStroke(2.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
             
             Path2D heart = createHeartPath(s);
@@ -256,9 +207,6 @@ public class IconDrawer {
         });
     }
     
-    /**
-     * Icono de Corazón Relleno (like activo) - NEGRO
-     */
     public static ImageIcon createHeartFilledIcon(int size) {
         return createIcon(size, (g, s) -> {
             g.setColor(Color.BLACK);  // Negro en lugar de rojo
@@ -268,56 +216,44 @@ public class IconDrawer {
         });
     }
     
-    /**
-     * Path del corazón reutilizable
-     */
     private static Path2D createHeartPath(int size) {
         Path2D heart = new Path2D.Float();
         
-        // Centro y dimensiones mejoradas
         float cx = size / 2f;
-        float cy = size * 0.45f; // Centrado mejor verticalmente
-        float w = size * 0.8f;   // Más ancho
-        float h = size * 0.75f;  // Más alto
+        float cy = size * 0.45f;
+        float w = size * 0.8f;
+        float h = size * 0.75f;
         
-        // Punto inferior (punta del corazón)
         heart.moveTo(cx, cy + h * 0.5f);
         
-        // Lado izquierdo: de la punta al lóbulo superior izquierdo
         heart.curveTo(
-            cx - w * 0.15f, cy + h * 0.25f,  // Control 1: curvatura inferior
-            cx - w * 0.45f, cy + h * 0.05f,   // Control 2: aproximación al lóbulo
-            cx - w * 0.35f, cy - h * 0.15f    // Punto: parte superior del lóbulo izquierdo
+            cx - w * 0.15f, cy + h * 0.25f,
+            cx - w * 0.45f, cy + h * 0.05f,
+            cx - w * 0.35f, cy - h * 0.15f
         );
         
-        // Lóbulo superior izquierdo (redondeado)
         heart.curveTo(
-            cx - w * 0.5f, cy - h * 0.35f,    // Control 1: curva exterior del lóbulo
-            cx - w * 0.2f, cy - h * 0.35f,    // Control 2: curva interior del lóbulo
-            cx, cy - h * 0.05f                // Punto: centro superior entre lóbulos
+            cx - w * 0.5f, cy - h * 0.35f,
+            cx - w * 0.2f, cy - h * 0.35f,
+            cx, cy - h * 0.05f
         );
         
-        // Lóbulo superior derecho (redondeado)
         heart.curveTo(
-            cx + w * 0.2f, cy - h * 0.35f,    // Control 1: curva interior del lóbulo
-            cx + w * 0.5f, cy - h * 0.35f,    // Control 2: curva exterior del lóbulo
-            cx + w * 0.35f, cy - h * 0.15f    // Punto: parte superior del lóbulo derecho
+            cx + w * 0.2f, cy - h * 0.35f,
+            cx + w * 0.5f, cy - h * 0.35f,
+            cx + w * 0.35f, cy - h * 0.15f
         );
         
-        // Lado derecho: del lóbulo superior derecho a la punta
         heart.curveTo(
-            cx + w * 0.45f, cy + h * 0.05f,   // Control 1: aproximación al lóbulo
-            cx + w * 0.15f, cy + h * 0.25f,   // Control 2: curvatura inferior
-            cx, cy + h * 0.5f                 // Punto: punta del corazón
+            cx + w * 0.45f, cy + h * 0.05f,
+            cx + w * 0.15f, cy + h * 0.25f,
+            cx, cy + h * 0.5f
         );
         
         heart.closePath();
         return heart;
     }
     
-    /**
-     * Icono de Comentario
-     */
     public static ImageIcon createCommentIcon(int size) {
         return createIcon(size, (g, s) -> {
             g.setColor(ICON_COLOR);
@@ -341,9 +277,6 @@ public class IconDrawer {
         });
     }
     
-    /**
-     * Avatar circular por defecto
-     */
     public static ImageIcon createDefaultAvatar(int size) {
         return createIcon(size, (g, s) -> {
             g.setColor(new Color(200, 200, 200));
@@ -360,9 +293,6 @@ public class IconDrawer {
         });
     }
     
-    /**
-     * Icono de Ojo Abierto (contraseña visible)
-     */
     public static ImageIcon createEyeOpenIcon(int size) {
         return createIcon(size, (g, s) -> {
             g.setColor(new Color(100, 100, 100));
@@ -371,26 +301,20 @@ public class IconDrawer {
             int centerX = s / 2;
             int centerY = s / 2;
             
-            // Contorno del ojo (elipse)
             int eyeWidth = (int)(s * 0.8);
             int eyeHeight = (int)(s * 0.45);
             g.drawArc(centerX - eyeWidth/2, centerY - eyeHeight/2, eyeWidth, eyeHeight, 0, 180);
             g.drawArc(centerX - eyeWidth/2, centerY - eyeHeight/2, eyeWidth, eyeHeight, 180, 180);
             
-            // Pupila (círculo relleno)
             int pupilaSize = (int)(s * 0.35);
             g.fillOval(centerX - pupilaSize/2, centerY - pupilaSize/2, pupilaSize, pupilaSize);
             
-            // Destello en la pupila (punto blanco)
             g.setColor(Color.WHITE);
             int destelloSize = (int)(s * 0.1);
             g.fillOval(centerX - pupilaSize/4, centerY - pupilaSize/4, destelloSize, destelloSize);
         });
     }
     
-    /**
-     * Icono de Ojo Cerrado/Tachado (contraseña oculta)
-     */
     public static ImageIcon createEyeClosedIcon(int size) {
         return createIcon(size, (g, s) -> {
             g.setColor(new Color(100, 100, 100));
@@ -399,17 +323,14 @@ public class IconDrawer {
             int centerX = s / 2;
             int centerY = s / 2;
             
-            // Contorno del ojo (elipse)
             int eyeWidth = (int)(s * 0.8);
             int eyeHeight = (int)(s * 0.45);
             g.drawArc(centerX - eyeWidth/2, centerY - eyeHeight/2, eyeWidth, eyeHeight, 0, 180);
             g.drawArc(centerX - eyeWidth/2, centerY - eyeHeight/2, eyeWidth, eyeHeight, 180, 180);
             
-            // Pupila (círculo relleno)
             int pupilaSize = (int)(s * 0.35);
             g.fillOval(centerX - pupilaSize/2, centerY - pupilaSize/2, pupilaSize, pupilaSize);
             
-            // Línea diagonal que tacha el ojo
             int lineMargin = (int)(s * 0.15);
             g.drawLine(lineMargin, s - lineMargin, s - lineMargin, lineMargin);
         });
@@ -456,6 +377,30 @@ public class IconDrawer {
         g2d.drawString(text, x, y);
         g2d.dispose();
         
+        return new ImageIcon(image);
+    }
+    
+    public static ImageIcon createDeleteIcon(int size) {
+        BufferedImage image = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = image.createGraphics();
+        
+        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+        
+        g.setColor(new Color(237, 73, 86));
+        g.setStroke(new BasicStroke(2.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+        
+        int margin = (int)(size * 0.25);
+        int x1 = margin;
+        int y1 = margin;
+        int x2 = size - margin;
+        int y2 = size - margin;
+        
+        g.drawLine(x1, y1, x2, y2);
+        
+        g.drawLine(x2, y1, x1, y2);
+        
+        g.dispose();
         return new ImageIcon(image);
     }
     

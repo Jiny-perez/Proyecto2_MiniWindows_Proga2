@@ -102,7 +102,6 @@ public class PanelPerfil extends JPanel {
         panelInfo.add(lblUsername);
         panelInfo.add(Box.createVerticalStrut(10));
         
-        // Por ahora, solo mostrar el username como nombre también
         JLabel lblNombre = new JLabel("Usuario de Instagram");
         lblNombre.setFont(new Font("Segoe UI", Font.PLAIN, 16));
         lblNombre.setForeground(TEXT_SECONDARY);
