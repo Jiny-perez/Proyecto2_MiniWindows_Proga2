@@ -6,6 +6,8 @@ package RedSocialINSTA.GUI;
 
 import Modelo.Usuario;
 import RedSocialINSTA.Logica.GestorINSTA;
+import RedSocialINSTA.Logica.GestorUsuariosLocal;
+import RedSocialINSTA.Logica.GestorNotificaciones;
 import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
@@ -18,6 +20,8 @@ import javax.swing.border.*;
 public class VentanaINSTA extends JFrame {
     
     private GestorINSTA gestorINSTA;
+    private GestorUsuariosLocal gestorUsuarios;
+    private GestorNotificaciones gestorNotificaciones;
     private Usuario usuarioActual;
     
     // Componentes principales
@@ -41,9 +45,11 @@ public class VentanaINSTA extends JFrame {
     private static final Color ACCENT_COLOR = new Color(0, 149, 246);
     private static final Color HOVER_COLOR = new Color(250, 250, 250);
     
-    public VentanaINSTA(Usuario usuario, GestorINSTA gestor) {
+    public VentanaINSTA(Usuario usuario, GestorINSTA gestor, GestorUsuariosLocal gestorUsuariosLocal) {
         this.usuarioActual = usuario;
         this.gestorINSTA = gestor;
+        this.gestorUsuarios = gestorUsuariosLocal;
+        this.gestorNotificaciones = new GestorNotificaciones();
         
         initComponents();
         configurarVentana();
@@ -63,10 +69,10 @@ public class VentanaINSTA extends JFrame {
         
         // Crear los diferentes paneles
         panelTimeline = new PanelTimeline(gestorINSTA, this);
-        panelExplorar = new PanelExplorar(gestorINSTA, this);
+        panelExplorar = new PanelExplorar(gestorINSTA, gestorUsuarios, this);
         panelPerfil = new PanelPerfil(gestorINSTA, usuarioActual.getUsername(), this);
         panelMensajes = new PanelMensajes(gestorINSTA);
-        panelNotificaciones = new PanelNotificaciones(gestorINSTA, this);
+        panelNotificaciones = new PanelNotificaciones(gestorINSTA, gestorNotificaciones, this);
         
         // Agregar paneles al CardLayout
         panelContenido.add(panelTimeline, "TIMELINE");
@@ -242,5 +248,9 @@ public class VentanaINSTA extends JFrame {
     
     public GestorINSTA getGestorINSTA() {
         return gestorINSTA;
+    }
+    
+    public GestorNotificaciones getGestorNotificaciones() {
+        return gestorNotificaciones;
     }
 }

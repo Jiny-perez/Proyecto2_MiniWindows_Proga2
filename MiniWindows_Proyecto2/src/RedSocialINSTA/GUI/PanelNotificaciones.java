@@ -5,6 +5,8 @@
 package RedSocialINSTA.GUI;
 
 import RedSocialINSTA.Logica.GestorINSTA;
+import RedSocialINSTA.Logica.GestorNotificaciones;
+import RedSocialINSTA.Modelo.Notificacion;
 import RedSocialINSTA.Modelo.Publicacion;
 import java.awt.*;
 import javax.swing.*;
@@ -18,6 +20,7 @@ import java.util.ArrayList;
 public class PanelNotificaciones extends JPanel {
     
     private GestorINSTA gestorINSTA;
+    private GestorNotificaciones gestorNotificaciones;
     private VentanaINSTA ventanaPrincipal;
     
     private JPanel panelNotificaciones;
@@ -29,8 +32,9 @@ public class PanelNotificaciones extends JPanel {
     private static final Color TEXT_PRIMARY = new Color(38, 38, 38);
     private static final Color TEXT_SECONDARY = new Color(142, 142, 142);
     
-    public PanelNotificaciones(GestorINSTA gestor, VentanaINSTA ventana) {
+    public PanelNotificaciones(GestorINSTA gestor, GestorNotificaciones gestorNotif, VentanaINSTA ventana) {
         this.gestorINSTA = gestor;
+        this.gestorNotificaciones = gestorNotif;
         this.ventanaPrincipal = ventana;
         
         initComponents();
@@ -72,16 +76,21 @@ public class PanelNotificaciones extends JPanel {
     public void actualizarContenido() {
         panelNotificaciones.removeAll();
         
-        // Buscar publicaciones donde mencionan al usuario
         String usernameActual = gestorINSTA.getUsernameActual();
-        ArrayList<Publicacion> menciones = buscarMenciones(usernameActual);
         
-        if (menciones.isEmpty()) {
+        // Obtener todas las notificaciones del usuario
+        ArrayList<Notificacion> notificaciones = gestorNotificaciones.obtenerNotificaciones(usernameActual);
+        
+        if (notificaciones.isEmpty()) {
             mostrarMensajeVacio();
         } else {
-            for (Publicacion publicacion : menciones) {
-                panelNotificaciones.add(crearNotificacion(publicacion));
-                panelNotificaciones.add(Box.createVerticalStrut(12));
+            // Marcar todas como leídas al abrir el panel
+            gestorNotificaciones.marcarTodasComoLeidas(usernameActual);
+            
+            for (Notificacion notif : notificaciones) {
+                JPanel tarjetaNotif = crearTarjetaNotificacion(notif);
+                panelNotificaciones.add(tarjetaNotif);
+                panelNotificaciones.add(Box.createVerticalStrut(8));
             }
         }
         
@@ -89,43 +98,36 @@ public class PanelNotificaciones extends JPanel {
         panelNotificaciones.repaint();
     }
     
-    private ArrayList<Publicacion> buscarMenciones(String username) {
-        ArrayList<Publicacion> menciones = new ArrayList<>();
-        String busqueda = "@" + username;
-        
-        // Buscar en todas las publicaciones
-        ArrayList<Publicacion> todasPublicaciones = gestorINSTA.buscarPublicaciones(busqueda);
-        
-        // Filtrar solo las que no son del usuario actual
-        for (Publicacion pub : todasPublicaciones) {
-            if (!pub.getUsername().equals(username)) {
-                menciones.add(pub);
-            }
-        }
-        
-        return menciones;
-    }
-    
-    private JPanel crearNotificacion(Publicacion publicacion) {
-        JPanel notificacion = new JPanel(new BorderLayout(12, 0));
-        notificacion.setBackground(CARD_COLOR);
-        notificacion.setBorder(new CompoundBorder(
+    /**
+     * Crea una tarjeta visual para una notificación
+     */
+    private JPanel crearTarjetaNotificacion(Notificacion notif) {
+        JPanel tarjeta = new JPanel(new BorderLayout(12, 0));
+        tarjeta.setBackground(CARD_COLOR);
+        tarjeta.setBorder(new CompoundBorder(
             new LineBorder(BORDER_COLOR, 1),
-            BorderFactory.createEmptyBorder(16, 16, 16, 16)
+            BorderFactory.createEmptyBorder(12, 12, 12, 12)
         ));
-        notificacion.setMaximumSize(new Dimension(600, 120));
-        notificacion.setAlignmentX(Component.LEFT_ALIGNMENT);
+        tarjeta.setMaximumSize(new Dimension(800, 80));
+        tarjeta.setAlignmentX(Component.LEFT_ALIGNMENT);
         
-        JLabel lblIcono = new JLabel();
-        ImageIcon avatarIcon = IconDrawer.createDefaultAvatar(40);
-        lblIcono.setIcon(avatarIcon);
-        lblIcono.setPreferredSize(new Dimension(40, 40));
+        // Avatar del usuario origen
+        JLabel lblAvatar = new JLabel();
+        ImageIcon avatarIcon = IconManager.getDefaultAvatarScaled(40);
+        lblAvatar.setIcon(avatarIcon);
+        lblAvatar.setPreferredSize(new Dimension(40, 40));
         
+        // Panel de contenido
         JPanel panelContenido = new JPanel();
         panelContenido.setLayout(new BoxLayout(panelContenido, BoxLayout.Y_AXIS));
         panelContenido.setBackground(CARD_COLOR);
         
-        JButton btnUsuario = new JButton("@" + publicacion.getUsername() + " te mencionó");
+        // Mensaje de la notificación con usuario clickable
+        JPanel panelMensaje = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+        panelMensaje.setBackground(CARD_COLOR);
+        panelMensaje.setAlignmentX(Component.LEFT_ALIGNMENT);
+        
+        JButton btnUsuario = new JButton("@" + notif.getUsernameOrigen());
         btnUsuario.setFont(new Font("Segoe UI", Font.BOLD, 14));
         btnUsuario.setForeground(TEXT_PRIMARY);
         btnUsuario.setBackground(CARD_COLOR);
@@ -133,40 +135,84 @@ public class PanelNotificaciones extends JPanel {
         btnUsuario.setContentAreaFilled(false);
         btnUsuario.setFocusPainted(false);
         btnUsuario.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        btnUsuario.setHorizontalAlignment(SwingConstants.LEFT);
-        btnUsuario.setAlignmentX(Component.LEFT_ALIGNMENT);
         
         btnUsuario.addActionListener(e -> {
-            ventanaPrincipal.mostrarPerfilDeUsuario(publicacion.getUsername());
+            ventanaPrincipal.mostrarPerfilDeUsuario(notif.getUsernameOrigen());
         });
         
-        JLabel lblContenido = new JLabel("<html>" + limitarTexto(publicacion.getContenido(), 80) + "</html>");
-        lblContenido.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        lblContenido.setForeground(TEXT_SECONDARY);
-        lblContenido.setAlignmentX(Component.LEFT_ALIGNMENT);
+        String textoAccion = "";
+        switch (notif.getTipo()) {
+            case LIKE:
+                textoAccion = " le gustó tu publicación";
+                break;
+            case COMENTARIO:
+                textoAccion = " comentó en tu publicación";
+                break;
+            case MENCION:
+                textoAccion = " te mencionó en una publicación";
+                break;
+            case SEGUIDOR:
+                textoAccion = " comenzó a seguirte";
+                break;
+        }
         
-        JLabel lblTiempo = new JLabel(publicacion.getTiempoTranscurrido());
+        JLabel lblAccion = new JLabel(textoAccion);
+        lblAccion.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        lblAccion.setForeground(TEXT_PRIMARY);
+        
+        panelMensaje.add(btnUsuario);
+        panelMensaje.add(lblAccion);
+        
+        // Tiempo transcurrido
+        JLabel lblTiempo = new JLabel(notif.getTiempoTranscurrido());
         lblTiempo.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         lblTiempo.setForeground(TEXT_SECONDARY);
         lblTiempo.setAlignmentX(Component.LEFT_ALIGNMENT);
         
-        panelContenido.add(btnUsuario);
-        panelContenido.add(Box.createVerticalStrut(4));
-        panelContenido.add(lblContenido);
+        panelContenido.add(panelMensaje);
         panelContenido.add(Box.createVerticalStrut(4));
         panelContenido.add(lblTiempo);
         
-        notificacion.add(lblIcono, BorderLayout.WEST);
-        notificacion.add(panelContenido, BorderLayout.CENTER);
-        
-        return notificacion;
-    }
-    
-    private String limitarTexto(String texto, int maxCaracteres) {
-        if (texto.length() <= maxCaracteres) {
-            return texto;
+        // Botón de acción (Ver publicación o Ver perfil)
+        JButton btnAccion = null;
+        if (notif.getIdPublicacion() != null) {
+            // Tiene publicación asociada
+            btnAccion = new JButton("Ver publicación");
+            btnAccion.setFont(new Font("Segoe UI", Font.BOLD, 13));
+            btnAccion.setForeground(new Color(0, 149, 246));
+            btnAccion.setBackground(CARD_COLOR);
+            btnAccion.setBorder(new LineBorder(new Color(0, 149, 246), 1));
+            btnAccion.setFocusPainted(false);
+            btnAccion.setCursor(new Cursor(Cursor.HAND_CURSOR));
+            btnAccion.setPreferredSize(new Dimension(140, 32));
+            
+            btnAccion.addActionListener(e -> {
+                // Ir al timeline y mostrar la publicación
+                ventanaPrincipal.mostrarTimeline();
+            });
+        } else if (notif.getTipo() == Notificacion.TipoNotificacion.SEGUIDOR) {
+            // Es un nuevo seguidor
+            btnAccion = new JButton("Ver perfil");
+            btnAccion.setFont(new Font("Segoe UI", Font.BOLD, 13));
+            btnAccion.setForeground(new Color(0, 149, 246));
+            btnAccion.setBackground(CARD_COLOR);
+            btnAccion.setBorder(new LineBorder(new Color(0, 149, 246), 1));
+            btnAccion.setFocusPainted(false);
+            btnAccion.setCursor(new Cursor(Cursor.HAND_CURSOR));
+            btnAccion.setPreferredSize(new Dimension(100, 32));
+            
+            btnAccion.addActionListener(e -> {
+                ventanaPrincipal.mostrarPerfilDeUsuario(notif.getUsernameOrigen());
+            });
         }
-        return texto.substring(0, maxCaracteres) + "...";
+        
+        tarjeta.add(lblAvatar, BorderLayout.WEST);
+        tarjeta.add(panelContenido, BorderLayout.CENTER);
+        if (btnAccion != null) {
+            tarjeta.add(btnAccion, BorderLayout.EAST);
+        }
+        
+        return tarjeta;
     }
     
     private void mostrarMensajeVacio() {
@@ -174,13 +220,10 @@ public class PanelNotificaciones extends JPanel {
         panelVacio.setLayout(new BoxLayout(panelVacio, BoxLayout.Y_AXIS));
         panelVacio.setBackground(BACKGROUND_COLOR);
         
-        // SIN ICONO - eliminado por problemas de visualización
-        
         JLabel lblMensaje = new JLabel("No tienes notificaciones nuevas");
         lblMensaje.setFont(new Font("Segoe UI", Font.PLAIN, 16));
         lblMensaje.setForeground(TEXT_SECONDARY);
         lblMensaje.setAlignmentX(Component.CENTER_ALIGNMENT);
-        
         
         panelVacio.add(Box.createVerticalGlue());
         panelVacio.add(lblMensaje);

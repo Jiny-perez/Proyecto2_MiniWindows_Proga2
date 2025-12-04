@@ -578,7 +578,8 @@ public class VentanaLogin extends JFrame {
     
     private void abrirInstagram(Usuario usuario) {
         GestorINSTA gestorINSTA = new GestorINSTA(usuario);
-        VentanaINSTA ventanaINSTA = new VentanaINSTA(usuario, gestorINSTA);
+        GestorUsuariosLocal gestorUsuariosLocal = new GestorUsuariosLocal();
+        VentanaINSTA ventanaINSTA = new VentanaINSTA(usuario, gestorINSTA, gestorUsuariosLocal);
         ventanaINSTA.setVisible(true);
         
         // Cerrar ventana de login

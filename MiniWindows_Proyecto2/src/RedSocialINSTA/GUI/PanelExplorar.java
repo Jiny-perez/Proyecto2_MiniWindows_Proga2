@@ -4,7 +4,9 @@
  */
 package RedSocialINSTA.GUI;
 
+import Modelo.Usuario;
 import RedSocialINSTA.Logica.GestorINSTA;
+import RedSocialINSTA.Logica.GestorUsuariosLocal;
 import RedSocialINSTA.Modelo.Publicacion;
 import java.awt.*;
 import java.awt.event.*;
@@ -19,6 +21,7 @@ import java.util.ArrayList;
 public class PanelExplorar extends JPanel {
    
     private GestorINSTA gestorINSTA;
+    private GestorUsuariosLocal gestorUsuarios;
     private VentanaINSTA ventanaPrincipal;
     
     private JTextField txtBusqueda;
@@ -32,8 +35,9 @@ public class PanelExplorar extends JPanel {
     private static final Color TEXT_SECONDARY = new Color(142, 142, 142);
     private static final Color ACCENT_COLOR = new Color(0, 149, 246);
     
-    public PanelExplorar(GestorINSTA gestor, VentanaINSTA ventana) {
+    public PanelExplorar(GestorINSTA gestor, GestorUsuariosLocal gestorUsuariosLocal, VentanaINSTA ventana) {
         this.gestorINSTA = gestor;
+        this.gestorUsuarios = gestorUsuariosLocal;
         this.ventanaPrincipal = ventana;
         
         initComponents();
@@ -87,6 +91,14 @@ public class PanelExplorar extends JPanel {
             BorderFactory.createEmptyBorder(8, 12, 8, 12)
         ));
         
+        // Búsqueda en tiempo real mientras escribe
+        txtBusqueda.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyReleased(KeyEvent e) {
+                buscar();
+            }
+        });
+        
         txtBusqueda.addActionListener(e -> buscar());
         
         JButton btnBuscar = new JButton("Buscar");
@@ -123,12 +135,14 @@ public class PanelExplorar extends JPanel {
         
         panelResultados.removeAll();
         
-        if (termino.startsWith("@")) {
-            buscarUsuarios(termino.substring(1));
-        } else if (termino.startsWith("#")) {
+        // Detectar tipo de búsqueda
+        if (termino.startsWith("#")) {
+            // Búsqueda de hashtags
             buscarHashtags(termino.substring(1));
         } else {
-            buscarContenido(termino);
+            // Búsqueda de usuarios (con o sin @)
+            String terminoLimpio = termino.startsWith("@") ? termino.substring(1) : termino;
+            buscarUsuarios(terminoLimpio);
         }
         
         panelResultados.revalidate();
@@ -136,8 +150,36 @@ public class PanelExplorar extends JPanel {
     }
     
     private void buscarUsuarios(String termino) {
-        // Por ahora, mostrar mensaje de que esta función requiere integración
-        mostrarMensajeVacio("Búsqueda de usuarios disponible cuando se integre con Mini-Windows");
+        ArrayList<Usuario> usuarios = gestorUsuarios.buscarUsuarios(termino);
+        
+        if (usuarios.isEmpty()) {
+            mostrarMensajeVacio("No se encontraron usuarios con \"" + termino + "\"");
+            return;
+        }
+        
+        JLabel lblTitulo = new JLabel("Usuarios encontrados:");
+        lblTitulo.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        lblTitulo.setForeground(TEXT_PRIMARY);
+        lblTitulo.setAlignmentX(Component.LEFT_ALIGNMENT);
+        panelResultados.add(lblTitulo);
+        panelResultados.add(Box.createVerticalStrut(16));
+        
+        String usernameActual = gestorINSTA.getUsernameActual();
+        
+        for (Usuario usuario : usuarios) {
+            // No mostrar al usuario actual en los resultados
+            if (!usuario.getUsername().equals(usernameActual)) {
+                JPanel tarjeta = crearTarjetaUsuario(usuario.getUsername(), usuario.getNombreCompleto());
+                panelResultados.add(tarjeta);
+                panelResultados.add(Box.createVerticalStrut(12));
+            }
+        }
+        
+        // Si solo se encontró al usuario actual, mostrar mensaje
+        if (usuarios.size() == 1 && usuarios.get(0).getUsername().equals(usernameActual)) {
+            panelResultados.removeAll();
+            mostrarMensajeVacio("No se encontraron otros usuarios con \"" + termino + "\"");
+        }
     }
     
     private void buscarHashtags(String hashtag) {
@@ -197,6 +239,12 @@ public class PanelExplorar extends JPanel {
         tarjeta.setMaximumSize(new Dimension(600, 80));
         tarjeta.setAlignmentX(Component.LEFT_ALIGNMENT);
         
+        // Avatar
+        JLabel lblAvatar = new JLabel();
+        ImageIcon avatarIcon = IconManager.getDefaultAvatarScaled(48);
+        lblAvatar.setIcon(avatarIcon);
+        lblAvatar.setPreferredSize(new Dimension(48, 48));
+        
         // Info del usuario
         JPanel panelInfo = new JPanel();
         panelInfo.setLayout(new BoxLayout(panelInfo, BoxLayout.Y_AXIS));
@@ -229,6 +277,7 @@ public class PanelExplorar extends JPanel {
         JButton btnSeguir = crearBotonSeguir(username);
         btnSeguir.setPreferredSize(new Dimension(100, 32));
         
+        tarjeta.add(lblAvatar, BorderLayout.WEST);
         tarjeta.add(panelInfo, BorderLayout.CENTER);
         tarjeta.add(btnSeguir, BorderLayout.EAST);
         
@@ -278,17 +327,37 @@ public class PanelExplorar extends JPanel {
     private void mostrarSugerencias() {
         panelResultados.removeAll();
         
-        JLabel lblTitulo = new JLabel("Explora Instagram");
-        lblTitulo.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        JLabel lblTitulo = new JLabel("Personas que podrías conocer");
+        lblTitulo.setFont(new Font("Segoe UI", Font.BOLD, 18));
         lblTitulo.setForeground(TEXT_PRIMARY);
         lblTitulo.setAlignmentX(Component.LEFT_ALIGNMENT);
         panelResultados.add(lblTitulo);
-        panelResultados.add(Box.createVerticalStrut(16));
+        panelResultados.add(Box.createVerticalStrut(8));
         
-        JLabel lblMensaje = new JLabel("<html><p style='color: #8e8e8e;'>Busca usuarios por username, encuentra publicaciones por hashtag (#), o busca contenido específico.</p></html>");
-        lblMensaje.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        lblMensaje.setAlignmentX(Component.LEFT_ALIGNMENT);
-        panelResultados.add(lblMensaje);
+        JLabel lblDescripcion = new JLabel("Busca usuarios por username o nombre, o explora hashtags (#)");
+        lblDescripcion.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        lblDescripcion.setForeground(TEXT_SECONDARY);
+        lblDescripcion.setAlignmentX(Component.LEFT_ALIGNMENT);
+        panelResultados.add(lblDescripcion);
+        panelResultados.add(Box.createVerticalStrut(24));
+        
+        // Mostrar usuarios sugeridos
+        String usernameActual = gestorINSTA.getUsernameActual();
+        ArrayList<Usuario> sugeridos = gestorUsuarios.obtenerUsuariosSugeridos(usernameActual, 10);
+        
+        if (sugeridos.isEmpty()) {
+            JLabel lblVacio = new JLabel("No hay usuarios para mostrar. ¡Sé el primero en registrarte!");
+            lblVacio.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+            lblVacio.setForeground(TEXT_SECONDARY);
+            lblVacio.setAlignmentX(Component.LEFT_ALIGNMENT);
+            panelResultados.add(lblVacio);
+        } else {
+            for (Usuario usuario : sugeridos) {
+                JPanel tarjeta = crearTarjetaUsuario(usuario.getUsername(), usuario.getNombreCompleto());
+                panelResultados.add(tarjeta);
+                panelResultados.add(Box.createVerticalStrut(12));
+            }
+        }
         
         panelResultados.revalidate();
         panelResultados.repaint();

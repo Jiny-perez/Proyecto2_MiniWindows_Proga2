@@ -246,11 +246,31 @@ public class TarjetaPublicacion extends JPanel {
     }
     
     private void toggleLike() {
+        String usernameActual = gestorINSTA.getUsernameActual();
+        boolean tenialikeAntes = publicacion.tieneLikeDe(usernameActual);
+        
         gestorINSTA.toggleLike(publicacion.getId());
         
-        boolean tienelike = publicacion.tieneLikeDe(gestorINSTA.getUsernameActual());
+        boolean tieneLikeAhora = publicacion.tieneLikeDe(usernameActual);
         
-        ImageIcon iconLike = tienelike ? 
+        // Crear o eliminar notificación de like
+        if (tieneLikeAhora && !tenialikeAntes) {
+            // Se agregó el like - crear notificación
+            ventanaPrincipal.getGestorNotificaciones().crearNotificacionLike(
+                usernameActual, 
+                publicacion.getUsername(), 
+                publicacion.getId()
+            );
+        } else if (!tieneLikeAhora && tenialikeAntes) {
+            // Se quitó el like - eliminar notificación
+            ventanaPrincipal.getGestorNotificaciones().eliminarNotificacionLike(
+                usernameActual, 
+                publicacion.getUsername(), 
+                publicacion.getId()
+            );
+        }
+        
+        ImageIcon iconLike = tieneLikeAhora ? 
             IconDrawer.createHeartFilledIcon(24) :
             IconDrawer.createHeartOutlineIcon(24);
         btnLike.setIcon(iconLike);
