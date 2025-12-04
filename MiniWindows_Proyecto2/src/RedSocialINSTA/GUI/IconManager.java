@@ -14,7 +14,7 @@ import java.util.HashMap;
  * @author najma
  */
 public class IconManager {
-    
+     
     private static final String RUTA_IMAGENES = "/RedSocialINSTA/Imagenes/";
     private static HashMap<String, ImageIcon> cache = new HashMap<>();
     
@@ -109,23 +109,44 @@ public class IconManager {
     
     /**
      * Obtiene un icono escalado a un tamaño específico
+     * PRIORIDAD: 1) PNG desde archivo, 2) IconDrawer dibujado, 3) Placeholder
      */
     public static ImageIcon getIconScaled(String nombreArchivo, int ancho, int alto) {
-        // Primero intentar obtener icono dibujado directamente al tamaño correcto
+        String cacheKey = nombreArchivo + "_" + ancho + "x" + alto;
+        
+        // Verificar cache primero
+        if (cache.containsKey(cacheKey)) {
+            return cache.get(cacheKey);
+        }
+        
+        // 1. PRIORIDAD ALTA: Intentar cargar PNG desde archivo y escalar
+        try {
+            URL url = IconManager.class.getResource(RUTA_IMAGENES + nombreArchivo);
+            if (url != null) {
+                ImageIcon original = new ImageIcon(url);
+                if (original.getIconWidth() > 0) {
+                    Image img = original.getImage();
+                    Image imgScaled = img.getScaledInstance(ancho, alto, Image.SCALE_SMOOTH);
+                    ImageIcon scaled = new ImageIcon(imgScaled);
+                    cache.put(cacheKey, scaled);
+                    System.out.println("✓ PNG cargado: " + nombreArchivo + " (" + ancho + "x" + alto + ")");
+                    return scaled;
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Error al cargar PNG " + nombreArchivo + ": " + e.getMessage());
+        }
+        
+        // 2. FALLBACK: Intentar icono dibujado con IconDrawer
         ImageIcon drawnIcon = getDrawnIcon(nombreArchivo, ancho);
         if (drawnIcon != null) {
-            cache.put(nombreArchivo + "_" + ancho + "x" + alto, drawnIcon);
+            cache.put(cacheKey, drawnIcon);
+            System.out.println("○ Usando IconDrawer: " + nombreArchivo + " (" + ancho + "x" + alto + ")");
             return drawnIcon;
         }
         
-        // Si no, intentar cargar desde archivo y escalar
-        ImageIcon original = getIcon(nombreArchivo);
-        if (original != null && original.getIconWidth() > 0) {
-            Image img = original.getImage();
-            Image imgScaled = img.getScaledInstance(ancho, alto, Image.SCALE_SMOOTH);
-            return new ImageIcon(imgScaled);
-        }
-        
+        // 3. ÚLTIMO RECURSO: Placeholder
+        System.err.println("✗ No se pudo cargar: " + nombreArchivo);
         return crearIconoPlaceholder(ancho, alto);
     }
     
@@ -162,7 +183,10 @@ public class IconManager {
      * Obtiene avatar por defecto escalado (circular)
      */
     public static ImageIcon getDefaultAvatarScaled(int tamano) {
-        // Siempre usar IconDrawer para avatares, es más confiable
+        ImageIcon icon = getIconScaled(DEFAULT_AVATAR, tamano, tamano);
+        if (icon != null && icon.getIconWidth() > 0) {
+            return icon;
+        }
         return IconDrawer.createDefaultAvatar(tamano);
     }
     

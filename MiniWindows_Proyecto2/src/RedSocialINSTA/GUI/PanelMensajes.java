@@ -33,6 +33,7 @@ public class PanelMensajes extends JPanel {
         setLayout(new BorderLayout());
         setBackground(BACKGROUND_COLOR);
         
+        // Header
         JPanel header = new JPanel(new BorderLayout());
         header.setBackground(CARD_COLOR);
         header.setBorder(new CompoundBorder(
@@ -48,13 +49,12 @@ public class PanelMensajes extends JPanel {
         
         add(header, BorderLayout.NORTH);
         
+        // Mensaje de funcionalidad pendiente
         JPanel panelCentro = new JPanel();
         panelCentro.setLayout(new BoxLayout(panelCentro, BoxLayout.Y_AXIS));
         panelCentro.setBackground(BACKGROUND_COLOR);
         
-        JLabel lblIcono = new JLabel("💬");
-        lblIcono.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 80));
-        lblIcono.setAlignmentX(Component.CENTER_ALIGNMENT);
+        // SIN ICONO - eliminado por problemas de visualización
         
         JLabel lblMensaje1 = new JLabel("Mensajería directa");
         lblMensaje1.setFont(new Font("Segoe UI", Font.BOLD, 20));
@@ -67,8 +67,6 @@ public class PanelMensajes extends JPanel {
         lblMensaje2.setAlignmentX(Component.CENTER_ALIGNMENT);
         
         panelCentro.add(Box.createVerticalGlue());
-        panelCentro.add(lblIcono);
-        panelCentro.add(Box.createVerticalStrut(20));
         panelCentro.add(lblMensaje1);
         panelCentro.add(Box.createVerticalStrut(10));
         panelCentro.add(lblMensaje2);

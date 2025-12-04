@@ -17,14 +17,13 @@ import java.util.ArrayList;
  * @author najma
  */
 public class PanelExplorar extends JPanel {
-    
+   
     private GestorINSTA gestorINSTA;
     private VentanaINSTA ventanaPrincipal;
     
     private JTextField txtBusqueda;
     private JPanel panelResultados;
     private JScrollPane scrollResultados;
-    private JComboBox<String> cmbTipoBusqueda;
     
     private static final Color BACKGROUND_COLOR = new Color(250, 250, 250);
     private static final Color CARD_COLOR = Color.WHITE;
@@ -44,9 +43,11 @@ public class PanelExplorar extends JPanel {
         setLayout(new BorderLayout());
         setBackground(BACKGROUND_COLOR);
         
+        // Panel de búsqueda
         JPanel panelBusqueda = crearPanelBusqueda();
         add(panelBusqueda, BorderLayout.NORTH);
         
+        // Panel de resultados
         panelResultados = new JPanel();
         panelResultados.setLayout(new BoxLayout(panelResultados, BoxLayout.Y_AXIS));
         panelResultados.setBackground(BACKGROUND_COLOR);
@@ -58,6 +59,7 @@ public class PanelExplorar extends JPanel {
         
         add(scrollResultados, BorderLayout.CENTER);
         
+        // Mostrar contenido inicial
         mostrarSugerencias();
     }
     
@@ -69,6 +71,15 @@ public class PanelExplorar extends JPanel {
             BorderFactory.createEmptyBorder(16, 20, 16, 20)
         ));
         
+        JLabel lblTitulo = new JLabel("Explora Instagram");
+        lblTitulo.setFont(new Font("Segoe UI", Font.BOLD, 24));
+        lblTitulo.setForeground(TEXT_PRIMARY);
+        panel.add(lblTitulo, BorderLayout.NORTH);
+        
+        JPanel panelCentro = new JPanel(new BorderLayout(10, 0));
+        panelCentro.setBackground(CARD_COLOR);
+        panelCentro.setBorder(BorderFactory.createEmptyBorder(20, 0, 0, 0));
+        
         txtBusqueda = new JTextField();
         txtBusqueda.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         txtBusqueda.setBorder(BorderFactory.createCompoundBorder(
@@ -78,24 +89,26 @@ public class PanelExplorar extends JPanel {
         
         txtBusqueda.addActionListener(e -> buscar());
         
-        String[] tiposBusqueda = {"Usuarios", "Hashtags", "Contenido"};
-        cmbTipoBusqueda = new JComboBox<>(tiposBusqueda);
-        cmbTipoBusqueda.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        cmbTipoBusqueda.setBackground(CARD_COLOR);
-        cmbTipoBusqueda.setPreferredSize(new Dimension(120, 40));
-        
         JButton btnBuscar = new JButton("Buscar");
         btnBuscar.setFont(new Font("Segoe UI", Font.BOLD, 14));
         btnBuscar.setForeground(Color.WHITE);
         btnBuscar.setBackground(ACCENT_COLOR);
         btnBuscar.setBorder(BorderFactory.createEmptyBorder(8, 20, 8, 20));
         btnBuscar.setFocusPainted(false);
+        btnBuscar.setOpaque(true);
+        btnBuscar.setBorderPainted(false);
         btnBuscar.setCursor(new Cursor(Cursor.HAND_CURSOR));
         btnBuscar.addActionListener(e -> buscar());
         
-        panel.add(txtBusqueda, BorderLayout.CENTER);
-        panel.add(cmbTipoBusqueda, BorderLayout.WEST);
-        panel.add(btnBuscar, BorderLayout.EAST);
+        panelCentro.add(txtBusqueda, BorderLayout.CENTER);
+        panelCentro.add(btnBuscar, BorderLayout.EAST);
+        
+        JLabel lblDescripcion = new JLabel("Busca usuarios por username, encuentra publicaciones por hashtag (#), o busca contenido específico.");
+        lblDescripcion.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        lblDescripcion.setForeground(TEXT_SECONDARY);
+        panelCentro.add(lblDescripcion, BorderLayout.SOUTH);
+        
+        panel.add(panelCentro, BorderLayout.CENTER);
         
         return panel;
     }
@@ -110,18 +123,12 @@ public class PanelExplorar extends JPanel {
         
         panelResultados.removeAll();
         
-        String tipoBusqueda = (String) cmbTipoBusqueda.getSelectedItem();
-        
-        switch (tipoBusqueda) {
-            case "Usuarios":
-                buscarUsuarios(termino);
-                break;
-            case "Hashtags":
-                buscarHashtags(termino);
-                break;
-            case "Contenido":
-                buscarContenido(termino);
-                break;
+        if (termino.startsWith("@")) {
+            buscarUsuarios(termino.substring(1));
+        } else if (termino.startsWith("#")) {
+            buscarHashtags(termino.substring(1));
+        } else {
+            buscarContenido(termino);
         }
         
         panelResultados.revalidate();
@@ -129,10 +136,12 @@ public class PanelExplorar extends JPanel {
     }
     
     private void buscarUsuarios(String termino) {
+        // Por ahora, mostrar mensaje de que esta función requiere integración
         mostrarMensajeVacio("Búsqueda de usuarios disponible cuando se integre con Mini-Windows");
     }
     
     private void buscarHashtags(String hashtag) {
+        // Limpiar el hashtag si viene con #
         String hashtagLimpio = hashtag.startsWith("#") ? hashtag.substring(1) : hashtag;
         
         ArrayList<Publicacion> publicaciones = gestorINSTA.buscarPorHashtag(hashtagLimpio);
@@ -188,6 +197,7 @@ public class PanelExplorar extends JPanel {
         tarjeta.setMaximumSize(new Dimension(600, 80));
         tarjeta.setAlignmentX(Component.LEFT_ALIGNMENT);
         
+        // Info del usuario
         JPanel panelInfo = new JPanel();
         panelInfo.setLayout(new BoxLayout(panelInfo, BoxLayout.Y_AXIS));
         panelInfo.setBackground(CARD_COLOR);
@@ -215,6 +225,7 @@ public class PanelExplorar extends JPanel {
         panelInfo.add(btnUsername);
         panelInfo.add(lblNombre);
         
+        // Botón de seguir/siguiendo
         JButton btnSeguir = crearBotonSeguir(username);
         btnSeguir.setPreferredSize(new Dimension(100, 32));
         
@@ -246,6 +257,7 @@ public class PanelExplorar extends JPanel {
         btn.addActionListener(e -> {
             gestorINSTA.toggleSeguir(username);
             
+            // Actualizar botón
             boolean ahoraSiguiendo = gestorINSTA.estaSiguiendo(username);
             btn.setText(ahoraSiguiendo ? "Siguiendo" : "Seguir");
             

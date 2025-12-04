@@ -17,7 +17,7 @@ import java.io.File;
  * @author najma
  */
 public class DialogCrearPublicacion extends JDialog {
-    
+   
     private GestorINSTA gestorINSTA;
     private boolean publicacionCreada = false;
     
@@ -34,8 +34,9 @@ public class DialogCrearPublicacion extends JDialog {
     private static final Color ACCENT_COLOR = new Color(0, 149, 246);
     
     public DialogCrearPublicacion(Frame parent, GestorINSTA gestor) {
-        super(parent, "Crear nueva publicación", true);
+        super(parent, true);
         this.gestorINSTA = gestor;
+        setUndecorated(true);
         
         initComponents();
         configurarDialogo();
@@ -179,6 +180,8 @@ public class DialogCrearPublicacion extends JDialog {
         btnPublicar.setBackground(ACCENT_COLOR);
         btnPublicar.setBorder(BorderFactory.createEmptyBorder(8, 24, 8, 24));
         btnPublicar.setFocusPainted(false);
+        btnPublicar.setOpaque(true);
+        btnPublicar.setBorderPainted(false);
         btnPublicar.setCursor(new Cursor(Cursor.HAND_CURSOR));
         btnPublicar.addActionListener(e -> publicar());
         

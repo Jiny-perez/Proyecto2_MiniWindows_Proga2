@@ -86,7 +86,7 @@ public class PanelPerfil extends JPanel {
         panelSuperior.setMaximumSize(new Dimension(800, 160));
         
         JLabel fotoPerfil = new JLabel();
-        ImageIcon avatarIcon = IconDrawer.createDefaultAvatar(150);
+        ImageIcon avatarIcon = IconManager.getDefaultAvatarScaled(150);
         fotoPerfil.setIcon(avatarIcon);
         fotoPerfil.setPreferredSize(new Dimension(150, 150));
         

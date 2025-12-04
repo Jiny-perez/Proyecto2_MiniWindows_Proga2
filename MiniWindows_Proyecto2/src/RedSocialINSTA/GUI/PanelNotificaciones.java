@@ -174,18 +174,15 @@ public class PanelNotificaciones extends JPanel {
         panelVacio.setLayout(new BoxLayout(panelVacio, BoxLayout.Y_AXIS));
         panelVacio.setBackground(BACKGROUND_COLOR);
         
-        JLabel lblIcono = new JLabel("🔔");
-        lblIcono.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 60));
-        lblIcono.setAlignmentX(Component.CENTER_ALIGNMENT);
+        // SIN ICONO - eliminado por problemas de visualización
         
         JLabel lblMensaje = new JLabel("No tienes notificaciones nuevas");
         lblMensaje.setFont(new Font("Segoe UI", Font.PLAIN, 16));
         lblMensaje.setForeground(TEXT_SECONDARY);
         lblMensaje.setAlignmentX(Component.CENTER_ALIGNMENT);
         
+        
         panelVacio.add(Box.createVerticalGlue());
-        panelVacio.add(lblIcono);
-        panelVacio.add(Box.createVerticalStrut(16));
         panelVacio.add(lblMensaje);
         panelVacio.add(Box.createVerticalGlue());
         

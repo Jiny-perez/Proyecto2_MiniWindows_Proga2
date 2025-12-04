@@ -131,30 +131,8 @@ public class VentanaINSTA extends JFrame {
     private JButton crearBotonNavegacion(String texto, String iconoNombre, ActionListener action) {
         JButton btn = new JButton(texto);
         
-        ImageIcon icono = null;
-        switch(iconoNombre) {
-            case IconManager.ICON_HOME:
-                icono = IconDrawer.createHomeIcon(24);
-                break;
-            case IconManager.ICON_SEARCH:
-                icono = IconDrawer.createSearchIcon(24);
-                break;
-            case IconManager.ICON_MESSAGES:
-                icono = IconDrawer.createMessageIcon(24);
-                break;
-            case IconManager.ICON_NOTIFICATIONS:
-                icono = IconDrawer.createNotificationIcon(24);
-                break;
-            case IconManager.ICON_CREATE:
-                icono = IconDrawer.createPlusIcon(24);
-                break;
-            case IconManager.ICON_PROFILE:
-                icono = IconDrawer.createProfileIcon(24);
-                break;
-            case IconManager.ICON_LOGOUT:
-                icono = IconDrawer.createLogoutIcon(24);
-                break;
-        }
+        // Usar IconManager que intenta PNG primero, luego IconDrawer como fallback
+        ImageIcon icono = IconManager.getIconScaled(iconoNombre, 24, 24);
         
         if (icono != null) {
             btn.setIcon(icono);
@@ -235,7 +213,11 @@ public class VentanaINSTA extends JFrame {
         if (opcion == JOptionPane.YES_OPTION) {
             gestorINSTA.guardarDatos();
             dispose();
-            // Aquí deberías regresar a la ventana de login
+            
+            SwingUtilities.invokeLater(() -> {
+                VentanaLogin ventanaLogin = new VentanaLogin();
+                ventanaLogin.setVisible(true);
+            });
         }
     }
     

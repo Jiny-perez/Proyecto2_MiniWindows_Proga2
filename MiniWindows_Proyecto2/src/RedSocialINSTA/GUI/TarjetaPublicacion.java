@@ -74,7 +74,7 @@ public class TarjetaPublicacion extends JPanel {
         panelUsuario.setBackground(BACKGROUND_COLOR);
         
         JLabel lblAvatar = new JLabel();
-        ImageIcon avatarIcon = IconDrawer.createDefaultAvatar(32);
+        ImageIcon avatarIcon = IconManager.getDefaultAvatarScaled(32);
         lblAvatar.setIcon(avatarIcon);
         lblAvatar.setPreferredSize(new Dimension(32, 32));
         panelUsuario.add(lblAvatar);

@@ -122,9 +122,9 @@ public class VentanaLogin extends JFrame {
         txtPasswordLogin = crearCampoPassword("Contraseña");
         txtPasswordLogin.setPreferredSize(new Dimension(230, 40));
         
-        // Botón para mostrar/ocultar contraseña
-        JButton btnMostrarPassword = new JButton("👁");
-        btnMostrarPassword.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 14));
+        // Botón para mostrar/ocultar contraseña con iconos profesionales
+        JButton btnMostrarPassword = new JButton();
+        btnMostrarPassword.setIcon(IconDrawer.createEyeClosedIcon(20));
         btnMostrarPassword.setPreferredSize(new Dimension(40, 40));
         btnMostrarPassword.setBackground(Color.WHITE);
         btnMostrarPassword.setBorder(BorderFactory.createCompoundBorder(
@@ -139,13 +139,13 @@ public class VentanaLogin extends JFrame {
             passwordVisible[0] = !passwordVisible[0];
             if (passwordVisible[0]) {
                 txtPasswordLogin.setEchoChar((char) 0);
-                btnMostrarPassword.setText("🙈");
+                btnMostrarPassword.setIcon(IconDrawer.createEyeOpenIcon(20));
             } else {
                 String currentText = String.valueOf(txtPasswordLogin.getPassword());
                 if (!currentText.equals("Contraseña") && !currentText.isEmpty()) {
                     txtPasswordLogin.setEchoChar('•');
                 }
-                btnMostrarPassword.setText("👁");
+                btnMostrarPassword.setIcon(IconDrawer.createEyeClosedIcon(20));
             }
         });
         
@@ -258,9 +258,9 @@ public class VentanaLogin extends JFrame {
         txtPasswordRegistro = crearCampoPassword("Contraseña");
         txtPasswordRegistro.setPreferredSize(new Dimension(230, 40));
         
-        // Botón para mostrar/ocultar contraseña
-        JButton btnMostrarPasswordReg = new JButton("👁");
-        btnMostrarPasswordReg.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 14));
+        // Botón para mostrar/ocultar contraseña con iconos profesionales
+        JButton btnMostrarPasswordReg = new JButton();
+        btnMostrarPasswordReg.setIcon(IconDrawer.createEyeClosedIcon(20));
         btnMostrarPasswordReg.setPreferredSize(new Dimension(40, 40));
         btnMostrarPasswordReg.setBackground(Color.WHITE);
         btnMostrarPasswordReg.setBorder(BorderFactory.createCompoundBorder(
@@ -275,13 +275,13 @@ public class VentanaLogin extends JFrame {
             passwordVisibleReg[0] = !passwordVisibleReg[0];
             if (passwordVisibleReg[0]) {
                 txtPasswordRegistro.setEchoChar((char) 0);
-                btnMostrarPasswordReg.setText("🙈");
+                btnMostrarPasswordReg.setIcon(IconDrawer.createEyeOpenIcon(20));
             } else {
                 String currentText = String.valueOf(txtPasswordRegistro.getPassword());
                 if (!currentText.equals("Contraseña") && !currentText.isEmpty()) {
                     txtPasswordRegistro.setEchoChar('•');
                 }
-                btnMostrarPasswordReg.setText("👁");
+                btnMostrarPasswordReg.setIcon(IconDrawer.createEyeClosedIcon(20));
             }
         });
         
@@ -300,9 +300,9 @@ public class VentanaLogin extends JFrame {
         txtConfirmarPassword = crearCampoPassword("Confirmar contraseña");
         txtConfirmarPassword.setPreferredSize(new Dimension(230, 40));
         
-        // Botón para mostrar/ocultar contraseña de confirmación
-        JButton btnMostrarConfirmar = new JButton("👁");
-        btnMostrarConfirmar.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 14));
+        // Botón para mostrar/ocultar contraseña de confirmación con iconos profesionales
+        JButton btnMostrarConfirmar = new JButton();
+        btnMostrarConfirmar.setIcon(IconDrawer.createEyeClosedIcon(20));
         btnMostrarConfirmar.setPreferredSize(new Dimension(40, 40));
         btnMostrarConfirmar.setBackground(Color.WHITE);
         btnMostrarConfirmar.setBorder(BorderFactory.createCompoundBorder(
@@ -317,13 +317,13 @@ public class VentanaLogin extends JFrame {
             confirmarVisible[0] = !confirmarVisible[0];
             if (confirmarVisible[0]) {
                 txtConfirmarPassword.setEchoChar((char) 0);
-                btnMostrarConfirmar.setText("🙈");
+                btnMostrarConfirmar.setIcon(IconDrawer.createEyeOpenIcon(20));
             } else {
                 String currentText = String.valueOf(txtConfirmarPassword.getPassword());
                 if (!currentText.equals("Confirmar contraseña") && !currentText.isEmpty()) {
                     txtConfirmarPassword.setEchoChar('•');
                 }
-                btnMostrarConfirmar.setText("👁");
+                btnMostrarConfirmar.setIcon(IconDrawer.createEyeClosedIcon(20));
             }
         });
         
