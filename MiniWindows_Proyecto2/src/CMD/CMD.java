@@ -1,8 +1,13 @@
 package CMD;
 
-import java.io.*;
-import java.io.IOException;
+import Excepciones.ArchivoNoValidoException;
+import Excepciones.PermisosDenegadosException;
+import Modelo.Archivo;
+import Modelo.Usuario;
+import Sistema.SistemaArchivos;
+
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 
 /**
@@ -10,20 +15,76 @@ import java.util.Date;
  * @author marye
  */
 public class CMD {
+   private final SistemaArchivos sistema;
+    private final String usernameActual;
 
-    private File carpetaActual;
+    public CMD(Usuario usuario, SistemaArchivos sistemaCompartido) {
+        this.sistema = sistemaCompartido != null ? sistemaCompartido : new SistemaArchivos();
+        this.usernameActual = usuario != null ? usuario.getUsername() : null;
+        inicializarUsuario(usuario);
+    }
 
-    public CMD() {
-        carpetaActual = new File(System.getProperty("user.dir"));
+    private void inicializarUsuario(Usuario usuario) {
+        try {
+            try {
+                sistema.cargar();
+            } catch (Exception ignored) {
+            }
+            if (usuario != null) {
+                try {
+                    sistema.establecerUsuario(usuario);
+                } catch (PermisosDenegadosException pex) {
+                    try {
+                        sistema.crearCarpetaUsuario(usuario.getUsername());
+                        sistema.establecerUsuario(usuario);
+                    } catch (Exception ex) {
+                        System.err.println("No fue posible crear/la carpeta de usuario: " + ex.getMessage());
+                    }
+                }
+                try {
+                    if (usuario.esAdmin()) {
+                        boolean existeAdmin = (sistema.obtenerArchivoEnRuta(usuario.getUsername()) != null);
+                        if (!existeAdmin) {
+                            sistema.crearCarpetaEnRuta(usuario.getUsername(), "");
+                        }
+                        sistema.navegarARuta("Z:\\" + usuario.getUsername());
+                    }
+                } catch (Exception e) {
+                    System.err.println("Advertencia al posicionar admin en su carpeta: " + e.getMessage());
+                }
+            } else {
+                try {
+                    sistema.navegarARuta("Z:\\");
+                } catch (Exception ignored) {
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Error al inicializar usuario en CMD: " + e.getMessage());
+        }
     }
 
     public String getPrompt() {
-        return carpetaActual.getAbsolutePath() + "> ";
+        String ruta = sistema.getRutaActual();
+        String rel = ruta.replace("Z:\\", "").replace("/", "\\");
+        if (rel.startsWith("\\")) {
+            rel = rel.substring(1);
+        }
+        if (rel.endsWith("\\")) {
+            rel = rel.substring(0, rel.length() - 1);
+        }
+        String user = usernameActual != null ? usernameActual : "";
+        if (rel.isEmpty()) {
+            return "Z:\\" + user + ">";
+        }
+        if (rel.toLowerCase().startsWith(user.toLowerCase())) {
+            return "Z:\\" + rel + ">";
+        }
+        return "Z:\\" + user + "\\" + rel + ">";
     }
 
     public String Ejecutar(String entrada) {
         if (entrada == null) {
-            entrada = " ";
+            entrada = "";
         }
         entrada = entrada.trim();
         if (entrada.isEmpty()) {
@@ -31,134 +92,118 @@ public class CMD {
         }
         String[] datos = entrada.split("\\s+", 2);
         String comando = datos[0].toLowerCase();
-        String parametro = (datos.length > 1) ? datos[1] : "";
-        switch (comando) {
-            case "mkdir":
-                return crearCarpeta(parametro);
-            case "rm":
-                return borrarCarpeta(parametro);
-            case "cd":
-                return CambiarCarpeta(parametro);
-            case "..":
-                return RegresarCarpeta();
-            case "dir":
-                return dir();
-            case "date":
-                return fechaActual();
-            case "time":
-                return horaActual();
-            default:
-                return "Comando no valido";
-        }
-    }
-
-    private String crearCarpeta(String nombreCarpeta) {
-        if (nombreCarpeta == null || nombreCarpeta.isBlank()) {
-            return "Comando no valido";
-        }
-        File nueva = new File(carpetaActual, nombreCarpeta);
-        if (nueva.exists()) {
-            return "La carpeta \"" + nueva.getName() + "\" ya existe";
-        }
-        return nueva.mkdir() ? "Carpeta creada " + nueva.getName() : "No se pudo crear la carpeta.";
-    }
-    
-     private boolean eliminarTodo(File f) {
-        if (f.isDirectory()) {
-            File[] hijos = f.listFiles();
-            if (hijos != null) {
-                for (File h : hijos) {
-                    if (!eliminarTodo(h)) {
-                        return false;
-                    }
-                }
+        String parametro = (datos.length > 1) ? datos[1].trim() : "";
+        try {
+            switch (comando) {
+                case "mkdir":
+                    return ejecutarMkdir(parametro);
+                case "rm":
+                    return ejecutarRm(parametro);
+                case "cd":
+                    return ejecutarCd(parametro);
+                case "cd..":
+                case "..":
+                    return ejecutarRegresar();
+                case "dir":
+                    return dir();
+                case "date":
+                    return fechaActual();
+                case "time":
+                    return horaActual();
+                default:
+                    return "Comando no valido";
             }
+        } catch (ArchivoNoValidoException ex) {
+            return "Error: " + ex.getMessage();
+        } catch (Exception ex) {
+            return "Error inesperado: " + ex.getMessage();
         }
-        return f.delete();
-    }
-
-    private String borrarCarpeta(String nombreCarpeta) {
-        if (nombreCarpeta == null || nombreCarpeta.isBlank()) {
-            return "Comando no valido";
-        }
-        
-        File objetivo = new File(carpetaActual, nombreCarpeta);
-       
-        if (!objetivo.exists()) {
-            return "No existe";
-        }
-        
-        return eliminarTodo(objetivo) ? "Eliminado: " + nombreCarpeta : "No se pudo eliminar";
-    }
-
-    private String CambiarCarpeta(String nombre) {
-        if (nombre == null || nombre.isBlank()) {
-            return "Comando no valido";
-        }
-        File nuevaRuta = new File(nombre);
-        if (!nuevaRuta.isAbsolute()) {
-            nuevaRuta = new File(carpetaActual, nombre);
-        }
-        if (nuevaRuta.exists() && nuevaRuta.isDirectory()) {
-            carpetaActual = nuevaRuta;
-            return "";
-        }
-        return "Directorio no encontrado";
-    }
-
-    private String RegresarCarpeta() {
-        File padre = carpetaActual.getParentFile();
-        if (padre != null) {
-            carpetaActual = padre;
-            return "";
-        }
-        return "Ya estas en la raiz";
     }
 
     private String dir() {
-        File[] lista = carpetaActual.listFiles();
+        ArrayList<Archivo> lista = sistema.listarContenido();
         SimpleDateFormat formato = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         StringBuilder salida = new StringBuilder();
-        salida.append("\nDirectorio de: ").append(carpetaActual.getAbsolutePath()).append("\n\n");
-
-        salida.append(String.format("%-19s  %-6s  %-10s  %s%n", "Modificacion", "Tipo", "Tamano", "Nombre"));
-        salida.append("---------------------------------------------------------\n");
+        salida.append("\nDirectorio de: ").append(sistema.getRutaActual()).append("\n\n");
+        salida.append(String.format("%-19s  %-6s  %-10s  %s%n",
+                "Modificacion", "Tipo", "Tamano", "Nombre"));
+        salida.append("--------------------------------------------------------------\n");
         if (lista != null) {
-            for (File f : lista) {
-                String fecha = formato.format(new Date(f.lastModified()));
-                String tipo = f.isDirectory() ? "<DIR>" : "FILE";
-                String tam = f.isDirectory() ? "-" : convertirTam(f.length());
-                String nombre = f.getName();
-                salida.append(String.format("%-19s  %-6s  %-10s  %s%n", fecha, tipo, tam, nombre));
+            for (Archivo f : lista) {
+                Date fechaDate = f.getFechaModificacion().getTime();
+                String fecha = formato.format(fechaDate);
+                String tipo = f.isEsCarpeta() ? "<DIR>" : "FILE";
+                String tam = f.isEsCarpeta() ? "-" : convertirTam(f.getTamanio());
+                String nombre = f.getNombre();
+                salida.append(String.format("%-19s  %-6s  %-10s  %s%n",
+                        fecha, tipo, tam, nombre));
             }
         }
         return salida.toString();
     }
 
-    private String convertirTam(Long b) {
-        if (b < 1024) {
-            return b + " B";
+    private String convertirTam(long bytes) {
+        if (bytes < 1024) {
+            return bytes + " B";
         }
-        double temp = b;
-        String[] unidades = {"KB", "MB", "GB", "TB", "PB"};
-        int pos = 0;
-        temp /= 1024.0;
-        while (temp >= 1024.0 && pos < unidades.length - 1) {
-            temp /= 1024.0;
-            pos++;
+        double kb = bytes / 1024.0;
+        if (kb < 1024) {
+            return String.format("%.2f KB", kb);
         }
-        int t = (int) Math.round(temp * 10);
-        int entero = t / 10;
-        int decimal = t % 10;
-        String numero = (decimal == 0) ? ("" + entero) : (entero + "." + decimal);
-        return numero + " " + unidades[pos];
+        double mb = kb / 1024.0;
+        if (mb < 1024) {
+            return String.format("%.2f MB", mb);
+        }
+        double gb = mb / 1024.0;
+        return String.format("%.2f GB", gb);
+    }
+
+    private String ejecutarMkdir(String parametro) throws ArchivoNoValidoException {
+        if (parametro == null || parametro.isBlank()) {
+            return "Comando no valido";
+        }
+        boolean ok = sistema.crearCarpeta(parametro);
+        return ok ? "Carpeta creada: " + parametro : "No se pudo crear la carpeta: " + parametro;
+    }
+
+    private String ejecutarRm(String parametro) throws ArchivoNoValidoException {
+        if (parametro == null || parametro.isBlank()) {
+            return "Comando no valido";
+        }
+        boolean force = false;
+        String nombre = parametro;
+        if (parametro.endsWith(" -f") || parametro.endsWith(" -r")) {
+            force = true;
+            nombre = parametro.substring(0, parametro.length() - 3).trim();
+        }
+        boolean ok = sistema.eliminar(nombre, force);
+        return ok ? "Eliminado: " + nombre : "No se pudo eliminar: " + nombre;
+    }
+
+    private String ejecutarCd(String parametro) throws ArchivoNoValidoException {
+        if (parametro == null || parametro.isBlank()) {
+            return "Comando no valido";
+        }
+        String ruta = parametro.replace("/", "\\");
+        if (ruta.toUpperCase().startsWith("Z:")) {
+            sistema.navegarARuta(ruta);
+            return "";
+        } else {
+            boolean ok = sistema.cambiarDirectorio(parametro);
+            return ok ? "" : "Directorio no encontrado";
+        }
+    }
+
+    private String ejecutarRegresar() {
+        boolean ok = sistema.regresarCarpeta();
+        return ok ? "" : "Ya estás en la raíz";
     }
 
     private String fechaActual() {
-        return new SimpleDateFormat("yyyy-MM-dd").format(new Date());
+        return "La fecha actual es: " + new SimpleDateFormat("yyyy-MM-dd").format(new Date());
     }
 
     private String horaActual() {
-        return new SimpleDateFormat("HH:mm:ss").format(new Date());
+        return "La hora actual es: " + new SimpleDateFormat("HH:mm:ss").format(new Date());
     }
 }

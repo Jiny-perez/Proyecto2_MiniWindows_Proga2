@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package Sistema;
 
 import Modelo.Usuario;
@@ -13,12 +9,10 @@ import Excepciones.*;
  */
 public class MiniWindowsClass {
     
-    // atributos
     private SistemaArchivos sistemaArchivos;
     private GestorUsuarios gestorUsuarios;
     private static MiniWindowsClass instancia;
     
-    // constructor privado
     private MiniWindowsClass() {
         this.gestorUsuarios = new GestorUsuarios();
         this.sistemaArchivos = new SistemaArchivos();
@@ -32,7 +26,6 @@ public class MiniWindowsClass {
         }
     }
     
-    // obtener instancia única del sistema (Singleton)
     public static MiniWindowsClass getInstance() {
         if (instancia == null) {
             instancia = new MiniWindowsClass();
@@ -40,7 +33,6 @@ public class MiniWindowsClass {
         return instancia;
     }
     
-    // iniciar sesión en el sistema
     public Usuario login(String username, String password) 
             throws UsuarioNoEncontradoException, ArchivoNoValidoException, PermisosDenegadosException {
         
@@ -49,13 +41,11 @@ public class MiniWindowsClass {
         return usuario;
     }
     
-    // cerrar sesión
     public void logout() {
         gestorUsuarios.logout();
         guardarSistema();
     }
     
-    // crear nuevo usuario en el sistema
     public Usuario crearUsuario(String nombreCompleto, String username, String password) 
             throws ArchivoNoValidoException {
         
@@ -72,7 +62,6 @@ public class MiniWindowsClass {
         return nuevoUsuario;
     }
     
-    // getters
     public SistemaArchivos getSistemaArchivos() {
         return sistemaArchivos;
     }
@@ -94,7 +83,6 @@ public class MiniWindowsClass {
         gestorUsuarios.guardarUsuarios();
     }
     
-    // reiniciar el sistema
     public void reiniciarSistema() {
         java.io.File archivoSistema = new java.io.File("sistema_archivos.sop");
         java.io.File archivoUsuarios = new java.io.File("usuarios.sop");

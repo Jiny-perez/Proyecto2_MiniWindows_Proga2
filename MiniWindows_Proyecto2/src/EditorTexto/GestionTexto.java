@@ -12,18 +12,18 @@ public class GestionTexto {
 
     public static DocumentModel cargarTxt(File file) throws IOException {
         if (file == null) {
-            throw new IllegalArgumentException("txtFile null");
+            throw new IllegalArgumentException();
         }
 
         String texto = readAll(file);
         DocumentModel dm = new DocumentModel(texto);
 
-        File meta = new File(file.getAbsolutePath() + ".meta");
-        if (!meta.exists()) {
+        File html = new File(file.getAbsolutePath() + ".html");
+        if (!html.exists()) {
             return dm;
         }
 
-        try (BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(meta), StandardCharsets.UTF_8))) {
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(html), StandardCharsets.UTF_8))) {
             String first = br.readLine();
             if (first != null && first.startsWith("DEFAULT;")) {
                 String[] ds = first.split(";", -1);
@@ -68,7 +68,7 @@ public class GestionTexto {
             w.write(txt.getTexto());
         }
 
-        File meta = new File(File.getAbsolutePath() + ".meta");
+        File meta = new File(File.getAbsolutePath() + ".html");
         try (Writer w = new OutputStreamWriter(new FileOutputStream(meta), StandardCharsets.UTF_8)) {
             // Guardamos: DEFAULT;font;size;style;color
             w.write("DEFAULT;" + guardarTxt(txt.getDefaultFont()) + ";" + txt.getDefaultSize() + ";" + txt.getDefaultStyle() + ";" + txt.getDefaultColor() + "\n");

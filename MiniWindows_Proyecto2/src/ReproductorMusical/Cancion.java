@@ -1,6 +1,5 @@
 package ReproductorMusical;
 
-import java.io.*;
 import javax.swing.*;
 
 /**

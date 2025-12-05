@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package Sistema;
 
 import Modelo.Usuario;
@@ -17,15 +13,12 @@ import java.util.ArrayList;
  */
 public class GestorUsuarios implements Serializable {
     
-    // atributo constante
     private static final long serialVersionUID = 1L;
     
-    // atributos
     private ArrayList<Usuario> usuarios;
     private Usuario usuarioActual;
     private static final String ARCHIVO_USUARIOS = "usuarios.sop";
     
-    // constructor
     public GestorUsuarios() {
         this.usuarios = new ArrayList<>();
         cargarUsuarios();
@@ -154,7 +147,7 @@ public class GestorUsuarios implements Serializable {
         guardarUsuarios();
     }
     
-    // eliminar usuario (solo el admin puede realizar esta acción)
+    // eliminar usuario 
     public boolean eliminarUsuario(String username) throws UsuarioNoEncontradoException, ArchivoNoValidoException {
         if (usuarioActual == null || !usuarioActual.esAdmin()) {
             throw new ArchivoNoValidoException("Solo el administrador puede eliminar usuarios");
@@ -190,7 +183,6 @@ public class GestorUsuarios implements Serializable {
     }
     
     // cargar usuarios desde archivo binario
-    @SuppressWarnings("unchecked")
     private void cargarUsuarios() {
         File archivo = new File(ARCHIVO_USUARIOS);
         if (!archivo.exists()) {

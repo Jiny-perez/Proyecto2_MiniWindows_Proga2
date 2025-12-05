@@ -2,10 +2,11 @@ package MiniWindows;
 
 import Sistema.MiniWindowsClass;
 import Sistema.SistemaArchivos;
-import Modelo.ArchivoVirtual;
+import Modelo.Archivo;
 import Modelo.Usuario;
 import Excepciones.*;
 import VisorImagenes.GUIVisorImagenes;
+import VisorImagenes.VisorImagenes;
 
 import javax.swing.*;
 import javax.swing.tree.*;
@@ -17,8 +18,7 @@ import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 
 import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
+import java.io.IOException;
 
 /**
  *
@@ -29,20 +29,15 @@ public class NavegadorArchivos extends JFrame {
     private MiniWindowsClass sistema;
     private SistemaArchivos sistemaArchivos;
     private Usuario usuarioActual;
-
-    private ArrayList<ArchivoVirtual> contenidoActual;
-
+    private ArrayList<Archivo> contenidoActual;
     private JTree arbolArchivos;
     private DefaultTreeModel modeloArbol;
     private DefaultMutableTreeNode nodoRaiz;
-
     private JTable tablaArchivos;
     private DefaultTableModel modeloTabla;
-
     private JLabel lblRutaActual;
     private JComboBox<String> comboOrden;
     private JLabel lblInfoEstado;
-
     private JToolBar barraHerramientas;
     private JButton btnNuevaCarpeta;
     private JButton btnSubirArchivo;
@@ -52,11 +47,9 @@ public class NavegadorArchivos extends JFrame {
 
     public NavegadorArchivos(JFrame parent, Usuario usuario, MiniWindowsClass sistema) {
         super("Navegador de Archivos - Mini-Windows");
-
         this.usuarioActual = usuario;
         this.sistema = sistema;
         this.sistemaArchivos = sistema.getSistemaArchivos();
-
         initComponents();
         configurarVentana();
         cargarArbol();
@@ -65,13 +58,10 @@ public class NavegadorArchivos extends JFrame {
     private void initComponents() {
         setLayout(new BorderLayout());
         getContentPane().setBackground(Color.WHITE);
-
         JPanel panelSuperior = crearPanelSuperior();
         add(panelSuperior, BorderLayout.NORTH);
-
         JSplitPane splitPane = crearPanelCentral();
         add(splitPane, BorderLayout.CENTER);
-
         JPanel panelInferior = crearPanelInferior();
         add(panelInferior, BorderLayout.SOUTH);
     }
@@ -131,7 +121,6 @@ public class NavegadorArchivos extends JFrame {
 
         JLabel lblOrden = new JLabel("Ordenar por:");
         lblOrden.setFont(new Font("Segoe UI", Font.PLAIN, 11));
-
         String[] opciones = {"Nombre", "Fecha", "Tipo", "Tamaño"};
         comboOrden = new JComboBox<>(opciones);
         comboOrden.setFont(new Font("Segoe UI", Font.PLAIN, 11));
@@ -185,7 +174,6 @@ public class NavegadorArchivos extends JFrame {
                 BorderFactory.createLineBorder(new Color(200, 200, 200), 1),
                 BorderFactory.createEmptyBorder(5, 10, 5, 10)
         ));
-
         btn.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseEntered(MouseEvent e) {
@@ -205,7 +193,6 @@ public class NavegadorArchivos extends JFrame {
                 ));
             }
         });
-
         return btn;
     }
 
@@ -223,8 +210,8 @@ public class NavegadorArchivos extends JFrame {
 
         arbolArchivos.addTreeSelectionListener(e -> {
             DefaultMutableTreeNode nodo = (DefaultMutableTreeNode) arbolArchivos.getLastSelectedPathComponent();
-            if (nodo != null && nodo.getUserObject() instanceof ArchivoVirtual) {
-                ArchivoVirtual archivo = (ArchivoVirtual) nodo.getUserObject();
+            if (nodo != null && nodo.getUserObject() instanceof Archivo) {
+                Archivo archivo = (Archivo) nodo.getUserObject();
                 if (archivo.isEsCarpeta()) {
                     navegarACarpeta(archivo);
                 }
@@ -240,6 +227,7 @@ public class NavegadorArchivos extends JFrame {
                 new Font("Segoe UI", Font.BOLD, 11)
         ));
         scrollArbol.setBackground(Color.WHITE);
+
         panelArbol.add(scrollArbol, BorderLayout.CENTER);
 
         JPanel panelTabla = new JPanel(new BorderLayout());
@@ -268,11 +256,8 @@ public class NavegadorArchivos extends JFrame {
             @Override
             public Component getTableCellRendererComponent(JTable table, Object value,
                     boolean isSelected, boolean hasFocus, int row, int column) {
-
                 super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-
                 String texto = value.toString();
-
                 if (texto.startsWith("\u25B6 ")) {
                     setText(texto.substring(2).trim());
                     setIcon(iconoCarpeta);
@@ -280,7 +265,6 @@ public class NavegadorArchivos extends JFrame {
                     setText(texto);
                     setIcon(null);
                 }
-
                 return this;
             }
         });
@@ -318,6 +302,7 @@ public class NavegadorArchivos extends JFrame {
                 new Font("Segoe UI", Font.BOLD, 11)
         ));
         scrollTabla.setBackground(Color.WHITE);
+
         panelTabla.add(scrollTabla, BorderLayout.CENTER);
 
         JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, panelArbol, panelTabla);
@@ -365,6 +350,7 @@ public class NavegadorArchivos extends JFrame {
         lblInfoEstado = new JLabel("Usuario: " + usuarioActual.getUsername() + " | 0 elementos");
         lblInfoEstado.setFont(new Font("Segoe UI", Font.PLAIN, 10));
         lblInfoEstado.setForeground(new Color(100, 100, 100));
+
         panel.add(lblInfoEstado);
 
         return panel;
@@ -379,54 +365,47 @@ public class NavegadorArchivos extends JFrame {
     private ImageIcon crearIconoCarpetaTabla() {
         int ancho = 16;
         int alto = 16;
-
         BufferedImage imagen = new BufferedImage(ancho, alto, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g2d = imagen.createGraphics();
-
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
         g2d.setColor(new Color(255, 193, 7));
         g2d.fillRect(1, 4, 6, 2);
-
         g2d.fillRect(1, 6, 14, 8);
-
         g2d.setColor(new Color(230, 170, 0));
         g2d.drawRect(1, 4, 6, 2);
         g2d.drawRect(1, 6, 14, 8);
-
         g2d.setColor(new Color(255, 220, 100));
         g2d.drawLine(2, 7, 13, 7);
-
         g2d.dispose();
         return new ImageIcon(imagen);
     }
 
     private void cargarArbol() {
-        ArchivoVirtual raiz = sistemaArchivos.getRaiz();
-        nodoRaiz = new DefaultMutableTreeNode(raiz);
-        modeloArbol.setRoot(nodoRaiz);
-
-        cargarHijosEnArbol(nodoRaiz, raiz);
+        DefaultMutableTreeNode raizNode = new DefaultMutableTreeNode("Z:");
+        modeloArbol.setRoot(raizNode);
+        construirArbolRecursivo(raizNode, "");
         arbolArchivos.expandRow(0);
-
         cargarTabla();
     }
 
-    private void cargarHijosEnArbol(DefaultMutableTreeNode nodoPadre, ArchivoVirtual carpeta) {
-        if (carpeta.getHijos() != null) {
-            for (ArchivoVirtual hijo : carpeta.getHijos()) {
-                if (hijo.isEsCarpeta()) {
-                    DefaultMutableTreeNode nodoHijo = new DefaultMutableTreeNode(hijo);
-                    nodoPadre.add(nodoHijo);
-                    cargarHijosEnArbol(nodoHijo, hijo);
-                }
+    private void construirArbolRecursivo(DefaultMutableTreeNode nodo, String rutaRelativa) {
+        ArrayList<Archivo> hijos = sistemaArchivos.listarContenidoEnRuta(rutaRelativa);
+        if (hijos == null) {
+            return;
+        }
+        for (Archivo fi : hijos) {
+            if (fi.isEsCarpeta()) {
+                DefaultMutableTreeNode child = new DefaultMutableTreeNode(fi);
+                nodo.add(child);
+                String nuevaRuta = fi.getRutaRelativa();
+                construirArbolRecursivo(child, nuevaRuta);
             }
         }
     }
 
-    private void navegarACarpeta(ArchivoVirtual carpeta) {
+    private void navegarACarpeta(Archivo carpeta) {
         try {
-            sistemaArchivos.navegarARuta(carpeta.getRutaCompleta());
+            sistemaArchivos.navegarARuta("Z:\\" + carpeta.getRutaRelativa());
             lblRutaActual.setText(sistemaArchivos.getRutaActual());
             cargarTabla();
         } catch (ArchivoNoValidoException e) {
@@ -436,27 +415,25 @@ public class NavegadorArchivos extends JFrame {
 
     private void cargarTabla() {
         modeloTabla.setRowCount(0);
-
         contenidoActual = sistemaArchivos.listarContenido();
+        if (contenidoActual == null) {
+            contenidoActual = new ArrayList<>();
+        }
 
-        for (ArchivoVirtual archivo : contenidoActual) {
+        for (Archivo fi : contenidoActual) {
             Object[] fila = new Object[4];
-
-            if (archivo.isEsCarpeta()) {
-                fila[0] = "\u25B6 " + archivo.getNombre();
+            if (fi.isEsCarpeta()) {
+                fila[0] = "\u25B6 " + fi.getNombre();
             } else {
-                fila[0] = archivo.getNombre();
+                fila[0] = fi.getNombre();
             }
-
-            fila[1] = archivo.isEsCarpeta() ? "Carpeta de archivos" : archivo.getTipoArchivo();
-            fila[2] = archivo.isEsCarpeta() ? "" : formatearTamanio(archivo.getTamanio());
-            fila[3] = formatearFecha(archivo.getFechaModificacion());
-
+            fila[1] = fi.isEsCarpeta() ? "Carpeta de archivos" : determinarTipo(obtenerExtension(fi.getNombre()));
+            fila[2] = fi.isEsCarpeta() ? "" : formatearTamanio(fi.getTamanio());
+            fila[3] = formatearFecha(fi.getFechaModificacion());
             modeloTabla.addRow(fila);
         }
 
-        lblInfoEstado.setText("Usuario: " + usuarioActual.getUsername() + " | "
-                + contenidoActual.size() + " elemento(s)");
+        lblInfoEstado.setText("Usuario: " + usuarioActual.getUsername() + " | " + contenidoActual.size() + " elemento(s)");
     }
 
     private void ordenarTabla() {
@@ -465,38 +442,39 @@ public class NavegadorArchivos extends JFrame {
 
     private void ordenarTabla(boolean ascendente) {
         String opcion = (String) comboOrden.getSelectedItem();
+        ArrayList<Archivo> lista = null;
 
         switch (opcion) {
             case "Nombre":
-                contenidoActual = sistemaArchivos.listarOrdenadoPorNombre(ascendente);
+                lista = sistemaArchivos.listarOrdenadoPorNombre(ascendente);
                 break;
             case "Fecha":
-                contenidoActual = sistemaArchivos.listarOrdenadoPorFecha(ascendente);
+                lista = sistemaArchivos.listarOrdenadoPorFecha(ascendente);
                 break;
             case "Tipo":
-                contenidoActual = sistemaArchivos.listarOrdenadoPorTipo(ascendente);
+                lista = sistemaArchivos.listarOrdenadoPorTipo(ascendente);
                 break;
             case "Tamaño":
-                contenidoActual = sistemaArchivos.listarOrdenadoPorTamanio(ascendente);
+                lista = sistemaArchivos.listarOrdenadoPorTamanio(ascendente);
                 break;
+            default:
+                lista = sistemaArchivos.listarContenido();
         }
 
-        if (contenidoActual != null) {
-            modeloTabla.setRowCount(0);
-            for (ArchivoVirtual archivo : contenidoActual) {
-                Object[] fila = new Object[4];
+        contenidoActual = lista != null ? lista : new ArrayList<>();
+        modeloTabla.setRowCount(0);
 
-                if (archivo.isEsCarpeta()) {
-                    fila[0] = "\u25B6 " + archivo.getNombre();
-                } else {
-                    fila[0] = archivo.getNombre();
-                }
-
-                fila[1] = archivo.isEsCarpeta() ? "Carpeta de archivos" : archivo.getTipoArchivo();
-                fila[2] = archivo.isEsCarpeta() ? "" : formatearTamanio(archivo.getTamanio());
-                fila[3] = formatearFecha(archivo.getFechaModificacion());
-                modeloTabla.addRow(fila);
+        for (Archivo fi : contenidoActual) {
+            Object[] fila = new Object[4];
+            if (fi.isEsCarpeta()) {
+                fila[0] = "\u25B6 " + fi.getNombre();
+            } else {
+                fila[0] = fi.getNombre();
             }
+            fila[1] = fi.isEsCarpeta() ? "Carpeta de archivos" : determinarTipo(obtenerExtension(fi.getNombre()));
+            fila[2] = fi.isEsCarpeta() ? "" : formatearTamanio(fi.getTamanio());
+            fila[3] = formatearFecha(fi.getFechaModificacion());
+            modeloTabla.addRow(fila);
         }
     }
 
@@ -509,18 +487,6 @@ public class NavegadorArchivos extends JFrame {
         if (nombre != null && !nombre.trim().isEmpty()) {
             try {
                 sistemaArchivos.crearCarpeta(nombre.trim());
-
-                String rutaVirtual = sistemaArchivos.getCarpetaActual().getRutaCompleta();
-                File carpetaFisicaBase = fileVirtualToReal(rutaVirtual);
-                File carpetaFisica = new File(carpetaFisicaBase, nombre.trim());
-
-                if (!carpetaFisica.exists()) {
-                    if (!carpetaFisica.mkdirs()) {
-                        mostrarError("Error", "No se pudo crear la carpeta física: " + carpetaFisica.getAbsolutePath());
-                        return;
-                    }
-                }
-
                 actualizarVista();
                 mostrarExito("Carpeta creada exitosamente");
             } catch (ArchivoNoValidoException e) {
@@ -529,72 +495,77 @@ public class NavegadorArchivos extends JFrame {
         }
     }
 
-    private void subirArchivo() {
-        JFileChooser fileChooser = new JFileChooser();
-        fileChooser.setDialogTitle("Seleccionar Archivo");
-        fileChooser.setMultiSelectionEnabled(false);
-        int resultado = fileChooser.showOpenDialog(this);
-        if (resultado != JFileChooser.APPROVE_OPTION) {
+ private void subirArchivo() {
+    JFileChooser fileChooser = new JFileChooser();
+    if (fileChooser.showOpenDialog(this) != JFileChooser.APPROVE_OPTION) {
+        return;
+    }
+    File archivoSeleccionado = fileChooser.getSelectedFile();
+    if (archivoSeleccionado == null || !archivoSeleccionado.exists() || !archivoSeleccionado.isFile()) {
+        mostrarError("Error", "Archivo seleccionado inválido");
+        return;
+    }
+    try {
+        File destinoDir = sistemaArchivos.getDirectorioActualFisico();
+        if (destinoDir == null) {
+            mostrarError("Error", "Directorio destino inválido");
+            return;
+        }
+        if (!destinoDir.exists()) {
+            if (!destinoDir.mkdirs()) {
+                mostrarError("Error", "No se pudo crear la carpeta destino: " + destinoDir.getAbsolutePath());
+                return;
+            }
+        }
+
+        File destino = new File(destinoDir, archivoSeleccionado.getName());
+
+        // Evitar copiar el mismo archivo (mismo path físico)
+        try {
+            if (archivoSeleccionado.getCanonicalPath().equals(destino.getCanonicalPath())) {
+                mostrarError("Error", "El archivo seleccionado ya está en la carpeta actual.");
+                return;
+            }
+        } catch (IOException ioe) {
+            // no crítico: seguir con precaución
+        }
+
+        if (destino.exists()) {
+            mostrarError("Error", "El archivo '" + destino.getName() + "' ya existe en la carpeta actual.");
             return;
         }
 
-        File archivoSeleccionado = fileChooser.getSelectedFile();
+        // Copia física del archivo (preserva atributos básicos)
         try {
-            String rutaVirtual = sistemaArchivos.getCarpetaActual().getRutaCompleta();
-
-            String nombreArchivo = archivoSeleccionado.getName();
-
-            ArchivoVirtual existente = sistemaArchivos.obtenerArchivoEnRuta(nombreArchivo, rutaVirtual);
-            if (existente != null) {
-                JOptionPane.showMessageDialog(this,
-                        "El archivo '" + nombreArchivo + "' ya existe en la carpeta actual.",
-                        "Archivo duplicado",
-                        JOptionPane.WARNING_MESSAGE);
-                return; 
-            }
-
-            File carpetaDestino = fileVirtualToReal(rutaVirtual);
-            if (!carpetaDestino.exists()) {
-                if (!carpetaDestino.mkdirs()) {
-                    mostrarError("Error", "No se pudo crear la carpeta destino: " + carpetaDestino.getAbsolutePath());
-                    return;
-                }
-            }
-
-            File archivoDestino = new File(carpetaDestino, nombreArchivo);
-            Files.copy(
-                    archivoSeleccionado.toPath(),
-                    archivoDestino.toPath(),
-                    StandardCopyOption.REPLACE_EXISTING
+            java.nio.file.Files.copy(
+                archivoSeleccionado.toPath(),
+                destino.toPath(),
+                java.nio.file.StandardCopyOption.COPY_ATTRIBUTES
             );
-
-            long tamanio = archivoDestino.length();
-            String extension = obtenerExtension(nombreArchivo);
-            String tipoArchivo = determinarTipo(extension);
-
-            sistemaArchivos.crearArchivoEnRuta(nombreArchivo, tipoArchivo, "", rutaVirtual);
-
-            ArchivoVirtual archivoVirtual = sistemaArchivos.obtenerArchivoEnRuta(nombreArchivo, rutaVirtual);
-            if (archivoVirtual != null) {
-                archivoVirtual.setTamanio(tamanio);
-
-                String sep = "";
-                if (!rutaVirtual.endsWith("/") && !rutaVirtual.endsWith("\\") && !rutaVirtual.isEmpty()) {
-                    sep = File.separator;
-                }
-                archivoVirtual.setRutaCompleta(rutaVirtual + sep + nombreArchivo);
-
-            }
-
-            actualizarVista();
-            mostrarExito("Archivo '" + nombreArchivo + "' subido exitosamente");
-        } catch (ArchivoNoValidoException anve) {
-            mostrarError("Error al crear archivo virtual", anve.getMessage());
-        } catch (Exception e) {
-            mostrarError("Error al subir archivo", e.getMessage());
-            e.printStackTrace();
+        } catch (java.nio.file.FileAlreadyExistsException faee) {
+            mostrarError("Error", "El archivo destino ya existe.");
+            return;
+        } catch (IOException ioe) {
+            mostrarError("Error al copiar archivo", ioe.getMessage());
+            ioe.printStackTrace();
+            return;
         }
+
+        // Opcional: ajustar fecha modificación del destino a la del origen
+        try {
+            destino.setLastModified(archivoSeleccionado.lastModified());
+        } catch (SecurityException se) {
+            // ignorar si no se puede
+        }
+
+        // Actualizar vista y persistir sistema
+        actualizarVista();
+        mostrarExito("Archivo '" + destino.getName() + "' subido exitosamente");
+    } catch (Exception e) {
+        mostrarError("Error al subir archivo", e.getMessage());
+        e.printStackTrace();
     }
+}
 
     private String obtenerExtension(String nombreArchivo) {
         int ultimoPunto = nombreArchivo.lastIndexOf('.');
@@ -611,17 +582,9 @@ public class NavegadorArchivos extends JFrame {
             case "jpg":
             case "jpeg":
             case "png":
-            case "gif":
-            case "bmp":
                 return "Imagen";
             case "mp3":
-            case "wav":
-            case "ogg":
                 return "Audio";
-            case "mp4":
-            case "avi":
-            case "mkv":
-                return "Video";
             case "pdf":
                 return "PDF";
             case "docx":
@@ -637,17 +600,15 @@ public class NavegadorArchivos extends JFrame {
 
     private void eliminarSeleccionado() {
         int filaSeleccionada = tablaArchivos.getSelectedRow();
-
         if (filaSeleccionada == -1) {
             mostrarAdvertencia("Seleccione un elemento para eliminar");
             return;
         }
-
         if (filaSeleccionada >= contenidoActual.size()) {
             return;
         }
 
-        ArchivoVirtual archivo = contenidoActual.get(filaSeleccionada);
+        Archivo archivo = contenidoActual.get(filaSeleccionada);
         String nombre = archivo.getNombre();
 
         int confirmacion = JOptionPane.showConfirmDialog(this,
@@ -659,51 +620,40 @@ public class NavegadorArchivos extends JFrame {
         if (confirmacion == JOptionPane.YES_OPTION) {
             try {
                 sistemaArchivos.eliminar(nombre);
-
-                File archivoFisico = fileVirtualToReal(archivo.getRutaCompleta());
-                if (archivoFisico.exists()) {
-                    if (archivoFisico.isDirectory()) {
-                        eliminarDirectorioRecursivo(archivoFisico);
-                    } else {
-                        archivoFisico.delete();
-                    }
-                }
-
                 actualizarVista();
                 mostrarExito("Elemento eliminado exitosamente");
             } catch (ArchivoNoValidoException e) {
-                mostrarError("Error al eliminar", e.getMessage());
-            }
-        }
-    }
+                if (e.getMessage() != null && e.getMessage().contains("no está vacía")) {
+                    int r = JOptionPane.showConfirmDialog(this, "La carpeta no está vacía. ¿Eliminar recursivamente?",
+                            "Eliminar recursivamente", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
 
-    private void eliminarDirectorioRecursivo(File directorio) {
-        File[] archivos = directorio.listFiles();
-        if (archivos != null) {
-            for (File archivo : archivos) {
-                if (archivo.isDirectory()) {
-                    eliminarDirectorioRecursivo(archivo);
+                    if (r == JOptionPane.YES_OPTION) {
+                        try {
+                            sistemaArchivos.eliminar(nombre, true);
+                            actualizarVista();
+                            mostrarExito("Elemento eliminado exitosamente");
+                        } catch (ArchivoNoValidoException ex) {
+                            mostrarError("Error al eliminar", ex.getMessage());
+                        }
+                    }
                 } else {
-                    archivo.delete();
+                    mostrarError("Error al eliminar", e.getMessage());
                 }
             }
         }
-        directorio.delete();
     }
 
     private void renombrarSeleccionado() {
         int filaSeleccionada = tablaArchivos.getSelectedRow();
-
         if (filaSeleccionada == -1) {
             mostrarAdvertencia("Seleccione un elemento para renombrar");
             return;
         }
-
         if (filaSeleccionada >= contenidoActual.size()) {
             return;
         }
 
-        ArchivoVirtual archivo = contenidoActual.get(filaSeleccionada);
+        Archivo archivo = contenidoActual.get(filaSeleccionada);
         String nombreActual = archivo.getNombre();
 
         String nombreNuevo = JOptionPane.showInputDialog(this,
@@ -713,27 +663,6 @@ public class NavegadorArchivos extends JFrame {
         if (nombreNuevo != null && !nombreNuevo.trim().isEmpty() && !nombreNuevo.equals(nombreActual)) {
             try {
                 sistemaArchivos.renombrar(nombreActual, nombreNuevo.trim());
-
-                File archivoFisicoAntiguo = fileVirtualToReal(archivo.getRutaCompleta());
-                if (archivoFisicoAntiguo.exists()) {
-                    File archivoFisicoNuevo = new File(archivoFisicoAntiguo.getParent(), nombreNuevo.trim());
-
-                    if (!archivoFisicoAntiguo.renameTo(archivoFisicoNuevo)) {
-
-                        try {
-                            if (archivoFisicoAntiguo.isDirectory()) {
-                                mostrarAdvertencia("Renombrado físico no soportado para directorios en este sistema.");
-                            } else {
-                                Files.copy(archivoFisicoAntiguo.toPath(), archivoFisicoNuevo.toPath(), StandardCopyOption.REPLACE_EXISTING);
-                                archivoFisicoAntiguo.delete();
-                            }
-                        } catch (Exception ex) {
-                            mostrarError("Error", "No se pudo renombrar físicamente: " + ex.getMessage());
-                        }
-
-                    }
-                }
-
                 actualizarVista();
                 mostrarExito("Elemento renombrado exitosamente");
             } catch (ArchivoNoValidoException e) {
@@ -744,40 +673,50 @@ public class NavegadorArchivos extends JFrame {
 
     private void abrirSeleccionado() {
         int filaSeleccionada = tablaArchivos.getSelectedRow();
-
         if (filaSeleccionada == -1) {
             return;
         }
-
         if (filaSeleccionada >= contenidoActual.size()) {
             return;
         }
 
-        ArchivoVirtual archivo = contenidoActual.get(filaSeleccionada);
+        Archivo archivo = contenidoActual.get(filaSeleccionada);
 
         if (archivo.isEsCarpeta()) {
             navegarACarpeta(archivo);
+            return;
+        }
+
+        VisorImagenes comprobador = new VisorImagenes(sistemaArchivos, 0);
+        boolean esImg = comprobador.esImagen(archivo);
+
+        if (esImg) {
+            abrirVisorImagenes(archivo);
         } else {
-            String nombre = archivo.getNombre().toLowerCase();
-
-            if (nombre.endsWith(".jpg") || nombre.endsWith(".jpeg")
-                    || nombre.endsWith(".png") || nombre.endsWith(".gif")
-                    || nombre.endsWith(".bmp") || nombre.endsWith(".webp")) {
-
-                abrirVisorImagenes(archivo);
-            } else {
-                JOptionPane.showMessageDialog(this,
-                        "No hay una aplicación configurada para abrir este tipo de archivo.",
-                        "Archivo no soportado",
-                        JOptionPane.INFORMATION_MESSAGE);
-            }
+            JOptionPane.showMessageDialog(this,
+                    "No hay una aplicación configurada para abrir este tipo de archivo.",
+                    "Archivo no soportado",
+                    JOptionPane.INFORMATION_MESSAGE);
         }
     }
 
-    private void abrirVisorImagenes(ArchivoVirtual archivo) {
-        File archivoReal = fileVirtualToReal(archivo.getRutaCompleta());
+    private void abrirVisorImagenes(Archivo archivo) {
+        if (archivo == null) {
+            mostrarError("Error", "Archivo nulo");
+            return;
+        }
 
-        if (!archivoReal.exists()) {
+        String rutaAbs = archivo.getRutaAbsoluta();
+        if (rutaAbs == null || rutaAbs.trim().isEmpty()) {
+            File dirActual = sistemaArchivos.getDirectorioActualFisico();
+            if (dirActual != null) {
+                File posible = new File(dirActual, archivo.getNombre());
+                rutaAbs = posible.getAbsolutePath();
+            }
+        }
+
+        File archivoReal = new File(rutaAbs);
+        if (!archivoReal.exists() || !archivoReal.isFile()) {
             mostrarError("Error", "La imagen no existe en el sistema de archivos real");
             return;
         }
@@ -787,6 +726,7 @@ public class NavegadorArchivos extends JFrame {
             visor.setVisible(true);
         } catch (Exception e) {
             mostrarError("Error al abrir imagen", e.getMessage());
+            e.printStackTrace();
         }
     }
 
@@ -799,17 +739,14 @@ public class NavegadorArchivos extends JFrame {
         if (bytes < 1024) {
             return bytes + " B";
         }
-
         double kb = bytes / 1024.0;
         if (kb < 1024) {
             return String.format("%.2f KB", kb);
         }
-
         double mb = kb / 1024.0;
         if (mb < 1024) {
             return String.format("%.2f MB", mb);
         }
-
         double gb = mb / 1024.0;
         return String.format("%.2f GB", gb);
     }
@@ -844,47 +781,6 @@ public class NavegadorArchivos extends JFrame {
                 JOptionPane.INFORMATION_MESSAGE);
     }
 
-    private File fileVirtualToReal(String direccion) {
-
-        File base = new File(System.getProperty("user.dir"), "Z");
-        if (!base.exists()) {
-            base.mkdirs();
-        }
-
-        if (direccion == null || direccion.trim().isEmpty()) {
-            return base;
-        }
-
-        String dir = direccion.replace("\\", File.separator).replace("/", File.separator).trim();
-
-        if (dir.startsWith("Z:" + File.separator) || dir.equals("Z:") || dir.startsWith("Z:")) {
-            dir = dir.substring(2);
-
-            if (dir.startsWith(File.separator)) {
-                dir = dir.substring(1);
-            }
-
-            if (dir.isEmpty()) {
-                return base;
-            }
-            return new File(base, dir);
-        }
-
-        File posible = new File(dir);
-        if (posible.isAbsolute()) {
-            return posible;
-        }
-
-        if (dir.startsWith(File.separator)) {
-            dir = dir.substring(1);
-        }
-
-        if (dir.isEmpty()) {
-            return base;
-        }
-        return new File(base, dir);
-    }
-
     private class RenderizadorArbol implements TreeCellRenderer {
 
         private JLabel label;
@@ -895,7 +791,6 @@ public class NavegadorArchivos extends JFrame {
             label = new JLabel();
             label.setOpaque(true);
             label.setFont(new Font("Segoe UI", Font.PLAIN, 11));
-
             iconoCarpetaCerrada = crearIconoCarpeta(false);
             iconoCarpetaAbierta = crearIconoCarpeta(true);
         }
@@ -903,37 +798,28 @@ public class NavegadorArchivos extends JFrame {
         private ImageIcon crearIconoCarpeta(boolean abierta) {
             int ancho = 16;
             int alto = 16;
-
             BufferedImage imagen = new BufferedImage(ancho, alto, BufferedImage.TYPE_INT_ARGB);
             Graphics2D g2d = imagen.createGraphics();
-
             g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
             if (abierta) {
                 g2d.setColor(new Color(255, 193, 7));
                 g2d.fillRect(1, 3, 6, 3);
-
                 int[] xPoints = {1, 15, 14, 2};
                 int[] yPoints = {6, 6, 14, 14};
                 g2d.fillPolygon(xPoints, yPoints, 4);
-
                 g2d.setColor(new Color(230, 170, 0));
                 g2d.drawPolygon(xPoints, yPoints, 4);
                 g2d.drawRect(1, 3, 6, 3);
-
                 g2d.setColor(new Color(245, 200, 50));
                 g2d.drawLine(2, 7, 14, 7);
-
             } else {
                 g2d.setColor(new Color(255, 193, 7));
                 g2d.fillRect(1, 4, 6, 2);
-
                 g2d.fillRect(1, 6, 14, 8);
-
                 g2d.setColor(new Color(230, 170, 0));
                 g2d.drawRect(1, 4, 6, 2);
                 g2d.drawRect(1, 6, 14, 8);
-
                 g2d.setColor(new Color(255, 220, 100));
                 g2d.drawLine(2, 7, 13, 7);
             }
@@ -945,7 +831,6 @@ public class NavegadorArchivos extends JFrame {
         @Override
         public Component getTreeCellRendererComponent(JTree tree, Object value,
                 boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
-
             String textoNodo = "";
             ImageIcon icono = null;
 
@@ -953,10 +838,9 @@ public class NavegadorArchivos extends JFrame {
                 DefaultMutableTreeNode nodo = (DefaultMutableTreeNode) value;
                 Object obj = nodo.getUserObject();
 
-                if (obj instanceof ArchivoVirtual) {
-                    ArchivoVirtual archivo = (ArchivoVirtual) obj;
+                if (obj instanceof Archivo) {
+                    Archivo archivo = (Archivo) obj;
                     textoNodo = archivo.getNombre();
-
                     if (archivo.isEsCarpeta()) {
                         icono = expanded ? iconoCarpetaAbierta : iconoCarpetaCerrada;
                     }

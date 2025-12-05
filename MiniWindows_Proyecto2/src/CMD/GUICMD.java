@@ -1,5 +1,7 @@
 package CMD;
 
+import Modelo.Usuario;
+import Sistema.SistemaArchivos;
 import javax.swing.*;
 import javax.swing.text.*;
 import java.awt.*;
@@ -11,19 +13,25 @@ import java.awt.event.*;
  */
 public class GUICMD {
 
-    private CMD consola = new CMD();
+    private final CMD consola;
     private int posPrompt;
-    private JTextArea txtArea = new JTextArea();
+    private final JTextArea txtArea = new JTextArea();
 
-    public GUICMD() {
+    public GUICMD(Usuario usuario, SistemaArchivos sistemaCompartido) {
+        this.consola = new CMD(usuario, sistemaCompartido);
+        initComponents();
+    }
+
+    public GUICMD(Usuario usuario) {
+        this.consola = new CMD(usuario, null);
         initComponents();
     }
 
     public void initComponents() {
-        JFrame ventana = new JFrame("Administrador: Commando Prompt");
+        JFrame ventana = new JFrame("Administrador: Command Prompt");
         ventana.setSize(820, 520);
         ventana.setLocationRelativeTo(null);
-        ventana.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        ventana.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         ventana.setLayout(new BorderLayout());
 
         txtArea.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 14));
@@ -31,6 +39,7 @@ public class GUICMD {
         txtArea.setForeground(Color.WHITE);
         txtArea.setCaretColor(Color.WHITE);
         txtArea.setLineWrap(false);
+        txtArea.setEditable(true);
 
         JScrollPane scroll = new JScrollPane(txtArea);
         ventana.add(scroll, BorderLayout.CENTER);
@@ -50,8 +59,7 @@ public class GUICMD {
             }
 
             @Override
-            public void replace(FilterBypass fb, int off, int len, String text, AttributeSet attrs)
-                    throws BadLocationException {
+            public void replace(FilterBypass fb, int off, int len, String text, AttributeSet attrs) throws BadLocationException {
                 if (off < posPrompt) {
                     return;
                 }
@@ -59,8 +67,7 @@ public class GUICMD {
             }
 
             @Override
-            public void insertString(FilterBypass fb, int off, String str, AttributeSet attr)
-                    throws BadLocationException {
+            public void insertString(FilterBypass fb, int off, String str, AttributeSet attr) throws BadLocationException {
                 if (off < posPrompt) {
                     txtArea.setCaretPosition(txtArea.getDocument().getLength());
                     return;
@@ -72,17 +79,22 @@ public class GUICMD {
         txtArea.addKeyListener(new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent e) {
-                if (e.getKeyCode() == KeyEvent.VK_HOME) {
+                int code = e.getKeyCode();
+                if (code == KeyEvent.VK_HOME) {
                     txtArea.setCaretPosition(posPrompt);
                     e.consume();
-                } else if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+                } else if (code == KeyEvent.VK_ENTER) {
                     e.consume();
                     ejecutarComando();
-                } else if (e.getKeyCode() == KeyEvent.VK_LEFT) {
+                } else if (code == KeyEvent.VK_LEFT) {
                     if (txtArea.getCaretPosition() <= posPrompt) {
                         e.consume();
                         txtArea.setCaretPosition(posPrompt);
                     }
+                } else if (code == KeyEvent.VK_UP) {
+                    e.consume();
+                } else if (code == KeyEvent.VK_DOWN) {
+                    e.consume();
                 }
             }
         });
@@ -104,8 +116,8 @@ public class GUICMD {
         try {
             Document doc = txtArea.getDocument();
             String linea = doc.getText(posPrompt, doc.getLength() - posPrompt).trim();
-
             txtArea.append("\n");
+
             if (linea.isEmpty()) {
                 imprimirPrompt();
                 return;
@@ -118,12 +130,8 @@ public class GUICMD {
 
             imprimirPrompt();
         } catch (BadLocationException ex) {
+            txtArea.append("Error interno en la consola\n");
+            imprimirPrompt();
         }
-    }
-    
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            new GUICMD(); 
-        });   
-    }
+    }  
 }

@@ -1,433 +1,470 @@
 package Sistema;
 
-import Modelo.ArchivoVirtual;
-import Modelo.Usuario;
-import Excepciones.ArchivoNoValidoException;
-import Excepciones.PermisosDenegadosException;
-
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Collections;
-import java.util.Stack;
+import java.util.*;
+import java.nio.file.*;
+import Modelo.Usuario;
+import Excepciones.*;
+import Modelo.Archivo;
+import java.nio.file.attribute.BasicFileAttributes;
 
-/**
- *
- * @author najma
- */
 public class SistemaArchivos implements Serializable {
 
-    // atributo constante
     private static final long serialVersionUID = 1L;
-
-    // atributos 
-    private ArchivoVirtual raiz;
-    private ArchivoVirtual carpetaActual;
-    private Stack<ArchivoVirtual> historialNavegacion;
+    private final String BASE_FISICO;
+    private String rutaActualRelativa;
     private Usuario usuarioActual;
-    private static final String ARCHIVO_SISTEMA = "sistema_archivos.sop";
+    private final String ARCHIVO_SISTEMA = "sistema_archivos.sop";
 
-    // constructor
     public SistemaArchivos() {
-        this.historialNavegacion = new Stack<>();
-        inicializarSistema();
+        this.BASE_FISICO = System.getProperty("user.dir") + File.separator + "Z";
+        this.rutaActualRelativa = "";
+        File base = new File(BASE_FISICO);
+        if (!base.exists()) {
+            base.mkdirs();
+        }
     }
 
-    // inicializa el sistema con la unidad Z:\
-    private void inicializarSistema() {
-        this.raiz = new ArchivoVirtual("Z:", "");
-        this.raiz.setRutaCompleta("Z:");
-        this.carpetaActual = raiz;
+    private File fileFromRel(String rutaRel) {
+        if (rutaRel == null || rutaRel.trim().isEmpty()) {
+            return new File(BASE_FISICO);
+        }
+        String r = rutaRel.replace("/", File.separator).replace("\\", File.separator);
+        return new File(BASE_FISICO + File.separator + r);
     }
 
-    // Métodos CMD
-    // obtiene la ruta de la carpeta actual
+    private String normalizeRel(String rutaRel) {
+        if (rutaRel == null) {
+            return "";
+        }
+        String r = rutaRel.trim().replace("\\", "/");
+        r = r.replaceAll("^/+|/+$", "");
+        return r;
+    }
+
+    private String buildRelativePath(File f) {
+        String abs = f.getAbsolutePath();
+        String base = new File(BASE_FISICO).getAbsolutePath();
+        if (abs.startsWith(base)) {
+            String rel = abs.substring(base.length());
+            if (rel.startsWith(File.separator)) {
+                rel = rel.substring(1);
+            }
+            return rel.replace(File.separatorChar, '/');
+        } else {
+            return f.getAbsolutePath();
+        }
+    }
+
+    private Calendar fileTimeToCalendar(File f) {
+        Calendar cal = Calendar.getInstance();
+        cal.setTimeInMillis(f.lastModified());
+        return cal;
+    }
+
     public String getRutaActual() {
-        return carpetaActual.getRutaCompleta() + "\\";
+        if (rutaActualRelativa == null || rutaActualRelativa.isEmpty()) {
+            return "Z:\\";
+        }
+        return "Z:\\" + rutaActualRelativa.replace("/", "\\") + "\\";
     }
 
-    // obtiene la carpeta actual
-    public ArchivoVirtual getCarpetaActual() {
-        return carpetaActual;
+    public File getDirectorioActualFisico() {
+        return fileFromRel(rutaActualRelativa);
     }
 
-    // mkdir - crear nueva carpeta
+    public Archivo getRaiz() {
+        File base = fileFromRel("");
+        return new Archivo("Z:", true, 0L, Calendar.getInstance(), "", base.getAbsolutePath());
+    }
+
+    public ArrayList<Archivo> listarContenido() {
+        return listarContenidoEnRuta(rutaActualRelativa);
+    }
+
+    public ArrayList<Archivo> listarContenidoEnRuta(String rutaRelativa) {
+        String rnorm = normalizeRel(rutaRelativa);
+        File dir = fileFromRel(rnorm);
+        ArrayList<Archivo> lista = new ArrayList<>();
+        File[] hijos = dir.listFiles();
+        if (hijos == null) {
+            return lista;
+        }
+        for (File f : hijos) {
+            Calendar cal = fileTimeToCalendar(f);
+            String rel = buildRelativePath(f);
+            lista.add(new Archivo(f.getName(), f.isDirectory(), f.isFile() ? f.length() : 0L, cal, rel, f.getAbsolutePath()));
+        }
+        return lista;
+    }
+
+    public Archivo obtenerArchivoEnRuta(String nombre, String rutaRelativa) {
+        if (nombre == null) {
+            return null;
+        }
+        String rnorm = normalizeRel(rutaRelativa);
+        File padre = fileFromRel(rnorm);
+        File f = new File(padre, nombre);
+        if (!f.exists()) {
+            return null;
+        }
+        return new Archivo(f.getName(), f.isDirectory(), f.isFile() ? f.length() : 0L, fileTimeToCalendar(f), buildRelativePath(f), f.getAbsolutePath());
+    }
+
+    public Archivo obtenerArchivoEnRuta(String nombre) {
+        return obtenerArchivoEnRuta(nombre, rutaActualRelativa);
+    }
+
     public boolean crearCarpeta(String nombre) throws ArchivoNoValidoException {
+        return crearCarpetaEnRuta(nombre, rutaActualRelativa);
+    }
+
+    public boolean crearCarpetaEnRuta(String nombre, String rutaVirtualPadre) throws ArchivoNoValidoException {
         if (nombre == null || nombre.trim().isEmpty()) {
             throw new ArchivoNoValidoException("El nombre de la carpeta no puede estar vacío");
         }
-
-        if (nombre.contains("\\") || nombre.contains("/") || nombre.contains(":") ||
-            nombre.contains("*") || nombre.contains("?") || nombre.contains("\"") ||
-            nombre.contains("<") || nombre.contains(">") || nombre.contains("|")) {
-            throw new ArchivoNoValidoException(nombre, "contiene caracteres inválidos");
+        if (nombre.contains("/") || nombre.contains("\\")) {
+            throw new ArchivoNoValidoException("El nombre de carpeta no puede contener separadores");
         }
-
-        if (carpetaActual.existeHijo(nombre)) {
+        String padreRel = normalizeRel(rutaVirtualPadre);
+        File padre = fileFromRel(padreRel);
+        if (!padre.exists() || !padre.isDirectory()) {
+            throw new ArchivoNoValidoException(rutaVirtualPadre, "la ruta padre no existe");
+        }
+        File nueva = new File(padre, nombre);
+        if (nueva.exists()) {
             throw new ArchivoNoValidoException(nombre, "ya existe una carpeta o archivo con ese nombre");
         }
-
-        ArchivoVirtual nuevaCarpeta = new ArchivoVirtual(nombre, carpetaActual.getRutaCompleta());
-        carpetaActual.agregarHijo(nuevaCarpeta);
+        try {
+            if (!nueva.mkdirs()) {
+                throw new ArchivoNoValidoException("No se pudo crear la carpeta física: " + nueva.getAbsolutePath());
+            }
+        } catch (SecurityException se) {
+            throw new ArchivoNoValidoException("Permisos denegados al crear carpeta física: " + se.getMessage());
+        }
         return true;
     }
 
-    // rm - eliminar carpeta o archivo
-    public boolean eliminar(String nombre) throws ArchivoNoValidoException {
+    public boolean crearArchivo(String nombre, String tipo, String contenido) throws ArchivoNoValidoException {
+        return crearArchivoEnRuta(nombre, tipo, contenido, rutaActualRelativa);
+    }
+
+    public boolean crearArchivoEnRuta(String nombre, String tipo, String contenido, String rutaVirtualPadre) throws ArchivoNoValidoException {
+        if (nombre == null || nombre.trim().isEmpty()) {
+            throw new ArchivoNoValidoException("El nombre del archivo no puede estar vacío");
+        }
+        if (nombre.contains("/") || nombre.contains("\\")) {
+            throw new ArchivoNoValidoException("Nombre de archivo inválido");
+        }
+        String padreRel = normalizeRel(rutaVirtualPadre);
+        File padre = fileFromRel(padreRel);
+        if (!padre.exists() || !padre.isDirectory()) {
+            throw new ArchivoNoValidoException(rutaVirtualPadre, "la ruta padre no existe");
+        }
+        File archivo = new File(padre, nombre);
+        if (archivo.exists()) {
+            throw new ArchivoNoValidoException(nombre, "ya existe");
+        }
+        try {
+            File parent = archivo.getParentFile();
+            if (parent != null && !parent.exists()) {
+                parent.mkdirs();
+            }
+            try (BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(archivo), "UTF-8"))) {
+                if (contenido != null) {
+                    bw.write(contenido);
+                }
+            }
+        } catch (IOException | SecurityException e) {
+            if (archivo.exists()) {
+                archivo.delete();
+            }
+            throw new ArchivoNoValidoException("No se pudo crear el archivo físico: " + e.getMessage());
+        }
+        return true;
+    }
+
+    public boolean renombrar(String nombreActual, String nombreNuevo) throws ArchivoNoValidoException {
+        if (nombreActual == null || nombreNuevo == null || nombreNuevo.trim().isEmpty()) {
+            throw new ArchivoNoValidoException("Nombre inválido");
+        }
+        File padre = fileFromRel(rutaActualRelativa);
+        File a = new File(padre, nombreActual);
+        if (!a.exists()) {
+            throw new ArchivoNoValidoException(nombreActual, "no existe");
+        }
+        File b = new File(padre, nombreNuevo);
+        if (b.exists()) {
+            throw new ArchivoNoValidoException(nombreNuevo, "ya existe un archivo o carpeta con ese nombre");
+        }
+        boolean ok = a.renameTo(b);
+        if (!ok) {
+            if (a.isFile()) {
+                try {
+                    Files.copy(a.toPath(), b.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                    Files.deleteIfExists(a.toPath());
+                } catch (IOException ex) {
+                    throw new ArchivoNoValidoException("Error al renombrar: " + ex.getMessage());
+                }
+            } else {
+                throw new ArchivoNoValidoException("No se pudo renombrar la carpeta");
+            }
+        }
+        return true;
+    }
+
+    public boolean eliminar(String nombre, boolean force) throws ArchivoNoValidoException {
         if (nombre == null || nombre.trim().isEmpty()) {
             throw new ArchivoNoValidoException("Debe especificar un nombre");
         }
-
-        if (!carpetaActual.existeHijo(nombre)) {
+        File padre = fileFromRel(rutaActualRelativa);
+        File objetivo = new File(padre, nombre);
+        if (!objetivo.exists()) {
             throw new ArchivoNoValidoException(nombre, "no existe");
         }
-
-        return carpetaActual.eliminarHijo(nombre);
+        try {
+            if (objetivo.isFile()) {
+                Files.deleteIfExists(objetivo.toPath());
+            } else {
+                boolean fisicoTieneContenido = objetivo.isDirectory() && (objetivo.list() != null && objetivo.list().length > 0);
+                if (fisicoTieneContenido && !force) {
+                    throw new ArchivoNoValidoException(nombre, "no está vacía. Usa force=true para eliminar recursivamente");
+                }
+                borrarFisicoRecursivo(objetivo);
+            }
+        } catch (IOException | SecurityException e) {
+            throw new ArchivoNoValidoException("No se pudo eliminar físicamente: " + e.getMessage());
+        }
+        return true;
     }
 
-    // cd - cambiar de carpeta
+    public boolean eliminar(String nombre) throws ArchivoNoValidoException {
+        return eliminar(nombre, false);
+    }
+
     public boolean cambiarDirectorio(String nombre) throws ArchivoNoValidoException {
         if (nombre == null || nombre.trim().isEmpty()) {
             throw new ArchivoNoValidoException("Debe especificar un nombre de carpeta");
         }
-
-        ArchivoVirtual destino = carpetaActual.buscarHijo(nombre);
-
-        if (destino == null) {
-            throw new ArchivoNoValidoException(nombre, "no existe");
+        String nuevaRel = (rutaActualRelativa == null || rutaActualRelativa.isEmpty()) ? nombre : rutaActualRelativa + "/" + nombre;
+        File f = fileFromRel(nuevaRel);
+        if (!f.exists() || !f.isDirectory()) {
+            throw new ArchivoNoValidoException(nombre, "no existe o no es una carpeta");
         }
-
-        if (!destino.isEsCarpeta()) {
-            throw new ArchivoNoValidoException(nombre, "no es una carpeta");
-        }
-
-        historialNavegacion.push(carpetaActual);
-        carpetaActual = destino;
+        rutaActualRelativa = normalizeRel(nuevaRel);
         return true;
     }
 
-    /**
-     * cd.. - Regresar a la carpeta padre
-     */
     public boolean regresarCarpeta() {
-        if (!historialNavegacion.isEmpty()) {
-            carpetaActual = historialNavegacion.pop();
-            return true;
-        } else if (carpetaActual != raiz) {
-            carpetaActual = raiz;
-            return true;
+        if (rutaActualRelativa == null || rutaActualRelativa.isEmpty()) {
+            return false;
         }
-        return false;
-    }
-
-    /**
-     * dir - Listar contenido de la carpeta actual
-     */
-    public ArrayList<ArchivoVirtual> listarContenido() {
-        if (carpetaActual.getHijos() != null) {
-            return new ArrayList<>(carpetaActual.getHijos());
-        }
-        return new ArrayList<>();
-    }
-
-    // Listar contenido como texto formateado (para el CMD)
-    public String listarContenidoTexto() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("\n Directorio de ").append(carpetaActual.getRutaCompleta()).append("\n\n");
-
-        ArrayList<ArchivoVirtual> contenido = listarContenido();
-
-        if (contenido.isEmpty()) {
-            sb.append("  (carpeta vacía)\n");
+        int last = rutaActualRelativa.lastIndexOf('/');
+        if (last <= 0) {
+            rutaActualRelativa = "";
         } else {
-            int carpetas = 0;
-            int archivos = 0;
-            long totalBytes = 0;
+            rutaActualRelativa = rutaActualRelativa.substring(0, last);
+        }
+        return true;
+    }
 
-            for (ArchivoVirtual nodo : contenido) {
-                Calendar cal = nodo.getFechaCreacion();
-                String fecha = String.format("%02d/%02d/%04d  %02d:%02d",
-                    cal.get(Calendar.DAY_OF_MONTH),
-                    cal.get(Calendar.MONTH) + 1,
-                    cal.get(Calendar.YEAR),
-                    cal.get(Calendar.HOUR_OF_DAY),
-                    cal.get(Calendar.MINUTE));
+    public boolean navegarARuta(String ruta) throws ArchivoNoValidoException {
+        if (ruta == null) {
+            return false;
+        }
+        String r = ruta.replaceFirst("(?i)^Z:[:\\\\/]*", "");
+        r = normalizeRel(r);
+        File f = fileFromRel(r);
+        if (!f.exists() || !f.isDirectory()) {
+            throw new ArchivoNoValidoException("Ruta no existe: " + ruta);
+        }
+        rutaActualRelativa = r;
+        return true;
+    }
 
-                if (nodo.isEsCarpeta()) {
-                    sb.append(fecha).append("    <DIR>          ").append(nodo.getNombre()).append("\n");
-                    carpetas++;
-                } else {
-                    sb.append(fecha).append("    ").append(String.format("%,15d", nodo.getTamanio()))
-                      .append(" ").append(nodo.getNombre()).append("\n");
-                    archivos++;
-                    totalBytes += nodo.getTamanio();
-                }
+    public ArrayList<Archivo> listarOrdenadoPorNombre(boolean ascendente) {
+        ArrayList<Archivo> lista = listarContenido();
+        lista.sort((a, b) -> ascendente ? a.getNombre().compareToIgnoreCase(b.getNombre())
+                : b.getNombre().compareToIgnoreCase(a.getNombre()));
+        return lista;
+    }
+
+    public ArrayList<Archivo> listarOrdenadoPorFecha(boolean ascendente) {
+        ArrayList<Archivo> lista = listarContenido();
+        lista.sort((a, b) -> ascendente ? Long.compare(a.getFechaModificacion().getTimeInMillis(), b.getFechaModificacion().getTimeInMillis())
+                : Long.compare(b.getFechaModificacion().getTimeInMillis(), a.getFechaModificacion().getTimeInMillis()));
+        return lista;
+    }
+
+    public ArrayList<Archivo> listarOrdenadoPorTamanio(boolean ascendente) {
+        ArrayList<Archivo> lista = listarContenido();
+        lista.sort((a, b) -> ascendente ? Long.compare(a.getTamanio(), b.getTamanio())
+                : Long.compare(b.getTamanio(), a.getTamanio()));
+        return lista;
+    }
+
+    public ArrayList<Archivo> listarOrdenadoPorTipo(boolean ascendente) {
+        ArrayList<Archivo> lista = listarContenido();
+        lista.sort((a, b) -> {
+            if (a.isEsCarpeta() && !b.isEsCarpeta()) {
+                return -1;
             }
+            if (!a.isEsCarpeta() && b.isEsCarpeta()) {
+                return 1;
+            }
+            String ta = obtenerExtension(a.getNombre());
+            String tb = obtenerExtension(b.getNombre());
+            int comp = ta.compareToIgnoreCase(tb);
+            return ascendente ? comp : -comp;
+        });
+        return lista;
+    }
 
-            sb.append("\n");
-            sb.append(String.format("%,16d archivo(s)  %,d bytes\n", archivos, totalBytes));
-            sb.append(String.format("%,16d carpeta(s)\n", carpetas));
+    private String obtenerExtension(String nombre) {
+        int ix = nombre.lastIndexOf('.');
+        if (ix > 0 && ix < nombre.length() - 1) {
+            return nombre.substring(ix + 1).toLowerCase();
         }
-
-        return sb.toString();
+        return "";
     }
 
-    // Métodos gestión de usuarios
-    // crear carpeta de usuario con subcarpetas
     public void crearCarpetaUsuario(String username) throws ArchivoNoValidoException {
-        ArchivoVirtual anterior = carpetaActual;
-
-        carpetaActual = raiz;
-
-        crearCarpeta(username);
-        cambiarDirectorio(username);
-
-        crearCarpeta("Mis Documentos");
-        crearCarpeta("Musica");
-        crearCarpeta("Mis Imagenes");
-
-        carpetaActual = anterior;
-        historialNavegacion.clear();
+        if (username == null || username.trim().isEmpty()) {
+            throw new ArchivoNoValidoException("Usuario inválido");
+        }
+        String anterior = rutaActualRelativa;
+        try {
+            rutaActualRelativa = "";
+            if (!fileFromRel(username).exists()) {
+                crearCarpetaEnRuta(username, "");
+            }
+            cambiarDirectorio(username);
+            if (!fileFromRel("Mis Documentos").exists()) {
+                crearCarpeta("Mis Documentos");
+            }
+            if (!fileFromRel("Musica").exists()) {
+                crearCarpeta("Musica");
+            }
+            if (!fileFromRel("Mis Imagenes").exists()) {
+                crearCarpeta("Mis Imagenes");
+            }
+        } finally {
+            rutaActualRelativa = anterior;
+        }
     }
 
-    // establecer el usuario actual y posicionarse en dicha carpeta
     public void establecerUsuario(Usuario usuario) throws ArchivoNoValidoException, PermisosDenegadosException {
+        if (usuario == null) {
+            this.usuarioActual = null;
+            this.rutaActualRelativa = "";
+            return;
+        }
         this.usuarioActual = usuario;
-
         if (usuario.esAdmin()) {
-            carpetaActual = raiz;
+            this.rutaActualRelativa = "";
         } else {
-            carpetaActual = raiz;
-            ArchivoVirtual carpetaUsuario = raiz.buscarHijo(usuario.getUsername());
-
-            if (carpetaUsuario != null) {
-                carpetaActual = carpetaUsuario;
+            File carpetaUsuario = fileFromRel(usuario.getUsername());
+            if (carpetaUsuario.exists() && carpetaUsuario.isDirectory()) {
+                this.rutaActualRelativa = usuario.getUsername();
             } else {
                 throw new PermisosDenegadosException("No se encontró la carpeta del usuario");
             }
         }
-
-        historialNavegacion.clear();
     }
 
-    public Usuario getUsuarioActual() {
-        return usuarioActual;
-    }
-
-    // Otros métodos
-    public ArrayList<ArchivoVirtual> listarOrdenadoPorNombre(boolean ascendente) {
-        ArrayList<ArchivoVirtual> lista = listarContenido();
-        Collections.sort(lista, (a, b) -> {
-            int resultado = a.getNombre().compareToIgnoreCase(b.getNombre());
-            return ascendente ? resultado : -resultado;
-        });
-        return lista;
-    }
-
-    public ArrayList<ArchivoVirtual> listarOrdenadoPorFecha(boolean ascendente) {
-        ArrayList<ArchivoVirtual> lista = listarContenido();
-        Collections.sort(lista, (a, b) -> {
-            int resultado = a.getFechaModificacion().compareTo(b.getFechaModificacion());
-            return ascendente ? resultado : -resultado;
-        });
-        return lista;
-    }
-
-    public ArrayList<ArchivoVirtual> listarOrdenadoPorTamanio(boolean ascendente) {
-        ArrayList<ArchivoVirtual> lista = listarContenido();
-        Collections.sort(lista, (a, b) -> {
-            int resultado = Long.compare(a.getTamanio(), b.getTamanio());
-            return ascendente ? resultado : -resultado;
-        });
-        return lista;
-    }
-
-    public ArrayList<ArchivoVirtual> listarOrdenadoPorTipo(boolean ascendente) {
-        ArrayList<ArchivoVirtual> lista = listarContenido();
-        Collections.sort(lista, (a, b) -> {
-            if (a.isEsCarpeta() && !b.isEsCarpeta()) return -1;
-            if (!a.isEsCarpeta() && b.isEsCarpeta()) return 1;
-
-            int resultado = a.getTipoArchivo().compareToIgnoreCase(b.getTipoArchivo());
-            return ascendente ? resultado : -resultado;
-        });
-        return lista;
-    }
-
-    public boolean crearArchivo(String nombre, String tipo, String contenido) throws ArchivoNoValidoException {
-        if (nombre == null || nombre.trim().isEmpty()) {
-            throw new ArchivoNoValidoException("El nombre del archivo no puede estar vacío");
-        }
-
-        if (carpetaActual.existeHijo(nombre)) {
-            throw new ArchivoNoValidoException(nombre, "ya existe");
-        }
-
-        long tamanio = contenido != null ? contenido.length() : 0;
-        ArchivoVirtual nuevoArchivo = new ArchivoVirtual(nombre, carpetaActual.getRutaCompleta(), tipo, tamanio);
-        nuevoArchivo.setContenido(contenido);
-        carpetaActual.agregarHijo(nuevoArchivo);
-        return true;
-    }
-
-    // obtener un archivo por su nombre (en carpetaActual)
-    public ArchivoVirtual obtenerArchivo(String nombre) {
-        return carpetaActual.buscarHijo(nombre);
-    }
-
-    // renombrar archivo o carpeta
-    public boolean renombrar(String nombreActual, String nombreNuevo) throws ArchivoNoValidoException {
-        ArchivoVirtual nodo = carpetaActual.buscarHijo(nombreActual);
-
-        if (nodo == null) {
-            throw new ArchivoNoValidoException(nombreActual, "no existe");
-        }
-
-        if (carpetaActual.existeHijo(nombreNuevo)) {
-            throw new ArchivoNoValidoException(nombreNuevo, "ya existe un archivo o carpeta con ese nombre");
-        }
-
-        nodo.setNombre(nombreNuevo);
-        return true;
-    }
-
-    // guardar el sistema de archivos en disco
     public void guardar() {
         try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(ARCHIVO_SISTEMA))) {
-            oos.writeObject(this.raiz);
+            oos.writeObject(this.rutaActualRelativa);
         } catch (IOException e) {
-            System.err.println("Error al guardar el sistema de archivos: "+e.getMessage());
+            System.err.println("Warning: no se pudo guardar archivo de sistema: " + e.getMessage());
         }
     }
 
-    // cargar el sistema de archivos desde disco
     public boolean cargar() {
         File archivo = new File(ARCHIVO_SISTEMA);
         if (!archivo.exists()) {
             return false;
         }
-
         try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(ARCHIVO_SISTEMA))) {
-            this.raiz = (ArchivoVirtual) ois.readObject();
-            this.carpetaActual = this.raiz;
-            this.historialNavegacion.clear();
+            Object o = ois.readObject();
+            if (o instanceof String) {
+                this.rutaActualRelativa = (String) o;
+            }
             return true;
         } catch (IOException | ClassNotFoundException e) {
-            System.err.println("Error al cargar el sistema de archivos: "+e.getMessage());
+            System.err.println("Warning: no se pudo cargar archivo de sistema: " + e.getMessage());
             return false;
         }
     }
 
-    // obtener la raíz del sistema
-    public ArchivoVirtual getRaiz() {
-        return raiz;
-    }
-
-    // navegar a una ruta específica desde la raíz
-    public boolean navegarARuta(String ruta) throws ArchivoNoValidoException {
-        if (ruta == null || ruta.isEmpty()) {
-            return false;
+    private void borrarFisicoRecursivo(File fichero) throws IOException {
+        if (fichero == null || !fichero.exists()) {
+            return;
         }
-
-        ruta = ruta.replace("Z:", "").replace("Z:\\", "");
-
-        if (ruta.isEmpty()) {
-            carpetaActual = raiz;
-            historialNavegacion.clear();
-            return true;
-        }
-
-        String[] partes = ruta.split("\\\\");
-        ArchivoVirtual actual = raiz;
-
-        for (String parte : partes) {
-            if (!parte.isEmpty()) {
-                ArchivoVirtual siguiente = actual.buscarHijo(parte);
-                if (siguiente == null || !siguiente.isEsCarpeta()) {
-                    throw new ArchivoNoValidoException(parte, "no existe o no es una carpeta");
+        final Path root = fichero.toPath();
+        Files.walkFileTree(root, new SimpleFileVisitor<Path>() {
+            @Override
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                try {
+                    Files.deleteIfExists(file);
+                } catch (IOException e) {
+                    try {
+                        File f = file.toFile();
+                        f.setWritable(true);
+                        Files.deleteIfExists(file);
+                    } catch (IOException ex) {
+                        throw new IOException("No se pudo eliminar el archivo: " + file.toAbsolutePath() + " -> " + ex.getMessage(), ex);
+                    }
                 }
-                actual = siguiente;
+                return FileVisitResult.CONTINUE;
             }
-        }
 
-        carpetaActual = actual;
-        historialNavegacion.clear();
-        return true;
+            @Override
+            public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+                if (exc != null) {
+                    throw exc;
+                }
+                try {
+                    Files.deleteIfExists(dir);
+                } catch (IOException e) {
+                    try {
+                        File d = dir.toFile();
+                        d.setWritable(true);
+                        Files.deleteIfExists(dir);
+                    } catch (IOException ex) {
+                        String pathStr = dir.toAbsolutePath().toString();
+                        String cmdOutput = ejecutarRmdirWindows(pathStr);
+                        if (new File(pathStr).exists()) {
+                            throw new IOException("No se pudo eliminar la carpeta (rmdir fallback falló): " + pathStr + " -> " + cmdOutput);
+                        } else {
+                            return FileVisitResult.CONTINUE;
+                        }
+                    }
+                }
+                return FileVisitResult.CONTINUE;
+            }
+        });
     }
 
-   
-    private ArchivoVirtual buscarNodoPorRuta(String rutaVirtual) {
-        if (rutaVirtual == null) return raiz;
-
-        String r = rutaVirtual.replace("Z:", "").replace("Z:\\", "").replace("Z/", "");
-        r = r.replace("/", File.separator).replace("\\", File.separator).trim();
-
-        if (r.startsWith(File.separator)) r = r.substring(1);
-        if (r.isEmpty()) return raiz;
-
-        String[] partes = r.split(java.util.regex.Pattern.quote(File.separator));
-        ArchivoVirtual actual = raiz;
-        for (String parte : partes) {
-            if (parte == null || parte.isEmpty()) continue;
-            ArchivoVirtual siguiente = actual.buscarHijo(parte);
-            if (siguiente == null) return null;
-            actual = siguiente;
+    private String ejecutarRmdirWindows(String ruta) {
+        ProcessBuilder pb = new ProcessBuilder("cmd", "/c", "rmdir", "/s", "/q", ruta);
+        pb.redirectErrorStream(true);
+        try {
+            Process p = pb.start();
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            try (InputStream is = p.getInputStream()) {
+                byte[] buf = new byte[4096];
+                int r;
+                while ((r = is.read(buf)) != -1) {
+                    baos.write(buf, 0, r);
+                }
+            }
+            int code = p.waitFor();
+            String output = baos.toString("UTF-8");
+            return "exit=" + code + " output=" + output;
+        } catch (IOException | InterruptedException ie) {
+            Thread.currentThread().interrupt();
+            return "Exception al ejecutar rmdir: " + ie.getMessage();
         }
-        return actual;
     }
-
-    
-    public boolean crearArchivoEnRuta(String nombre, String tipo, String contenido, String rutaVirtualPadre) throws ArchivoNoValidoException {
-        if (nombre == null || nombre.trim().isEmpty()) {
-            throw new ArchivoNoValidoException("El nombre del archivo no puede estar vacío");
-        }
-
-        ArchivoVirtual padre = buscarNodoPorRuta(rutaVirtualPadre);
-        if (padre == null) {
-            throw new ArchivoNoValidoException(rutaVirtualPadre, "la ruta padre no existe");
-        }
-        if (!padre.isEsCarpeta()) {
-            throw new ArchivoNoValidoException(rutaVirtualPadre, "la ruta padre no es una carpeta");
-        }
-        if (padre.existeHijo(nombre)) {
-            throw new ArchivoNoValidoException(nombre, "ya existe");
-        }
-
-        long tamanio = contenido != null ? contenido.length() : 0;
-        ArchivoVirtual nuevoArchivo = new ArchivoVirtual(nombre, padre.getRutaCompleta(), tipo, tamanio);
-        nuevoArchivo.setContenido(contenido);
-        padre.agregarHijo(nuevoArchivo);
-        return true;
-    }
-
-  
-    public boolean crearCarpetaEnRuta(String nombre, String rutaVirtualPadre) throws ArchivoNoValidoException {
-        if (nombre == null || nombre.trim().isEmpty()) {
-            throw new ArchivoNoValidoException("El nombre de la carpeta no puede estar vacío");
-        }
-
-        ArchivoVirtual padre = buscarNodoPorRuta(rutaVirtualPadre);
-        if (padre == null) {
-            throw new ArchivoNoValidoException(rutaVirtualPadre, "la ruta padre no existe");
-        }
-        if (!padre.isEsCarpeta()) {
-            throw new ArchivoNoValidoException(rutaVirtualPadre, "la ruta padre no es una carpeta");
-        }
-        if (padre.existeHijo(nombre)) {
-            throw new ArchivoNoValidoException(nombre, "ya existe una carpeta o archivo con ese nombre");
-        }
-
-        ArchivoVirtual nuevaCarpeta = new ArchivoVirtual(nombre, padre.getRutaCompleta());
-        padre.agregarHijo(nuevaCarpeta);
-        return true;
-    }
-
-
-    public ArchivoVirtual obtenerArchivoEnRuta(String nombre, String rutaVirtualPadre) {
-        ArchivoVirtual padre = buscarNodoPorRuta(rutaVirtualPadre);
-        if (padre == null) return null;
-        return padre.buscarHijo(nombre);
-    }
-
-
 }

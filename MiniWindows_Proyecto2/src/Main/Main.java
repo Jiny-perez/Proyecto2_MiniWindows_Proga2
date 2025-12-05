@@ -1,6 +1,6 @@
 package Main;
 
-import MiniWindows.PantallaLogin;
+import MiniWindows.VentanaInicio;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 
@@ -9,19 +9,17 @@ import javax.swing.UIManager;
  * @author marye
  */
 public class Main {
-    
-    public static void main(String[] args) {
-        try {
-            
+   public static void main(String[] args) {
+       
+         try {       
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
         } catch (Exception e) {
-            System.err.println("No se pudo establecer el Look and Feel del sistema");
             e.printStackTrace();
         }
-        
+         
         SwingUtilities.invokeLater(() -> {
-            PantallaLogin login = new PantallaLogin();
-            login.setVisible(true);
+                   SwingUtilities.invokeLater(() -> new VentanaInicio().MostrarVenatanaInicio());
+
         });
     }
 }
